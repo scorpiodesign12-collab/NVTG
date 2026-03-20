@@ -52,7 +52,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .avc img{width:100%;height:100%;object-fit:cover;display:block}
 .avcam{position:absolute;bottom:3px;right:3px;width:26px;height:26px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;border:2.5px solid var(--w)}
 .avcam svg{width:12px;height:12px;color:#fff}
-.hn{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--n);text-align:center;margin-bottom:4px}
+.hn{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--n);text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0}
 .hu{font-size:.82rem;color:var(--b);font-weight:600;margin-bottom:3px;cursor:pointer;transition:opacity .15s}
 .hu:hover{opacity:.7}
 .hs{font-size:.75rem;color:var(--ok);font-weight:500}
@@ -199,13 +199,14 @@ function render(){
   Q('hn').appendChild(document.createTextNode(full));
   if(D.verified){
     const vb=document.createElement('svg');
-    vb.setAttribute('width','18');vb.setAttribute('height','18');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
-    vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
-    vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
+    vb.setAttribute('width','20');vb.setAttribute('height','20');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
+    vb.style.cssText='display:inline-flex;align-items:center;margin-left:6px;vertical-align:middle;flex-shrink:0';
+    vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
     Q('hn').appendChild(vb);
   }
-  Q('hu').textContent=D.user?('@'+D.user.replace(/^@/,'')):D.user;
-  Q('rusr').textContent=D.user?('@'+D.user.replace(/^@/,'')):D.user;
+  const uname=(D.user||'').replace(/^@/,'');
+  Q('hu').textContent=uname?('@'+uname):D.user;
+  Q('rusr').textContent=uname?('@'+uname):D.user;
   Q('rnm').textContent=full;
   const g=GRADS[D.user.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%GRADS.length];
   Q('avc').style.background=`linear-gradient(135deg,${g[0]},${g[1]})`;
@@ -280,7 +281,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(!user){location.href='nvtg-index.html';return;}
   const {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
   if(!prof){location.href='nvtg-index.html';return;}
-  D={id:prof.id,name:prof.full_name||'',user:prof.username||'@user',bio:prof.bio||'',av:prof.avatar_url||'',verified:prof.verified||false};
+  D={id:prof.id,name:prof.full_name||'',user:prof.username||'',bio:prof.bio||'',av:prof.avatar_url||'',verified:prof.verified||false};
   render();
 });
 </script>

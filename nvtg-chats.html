@@ -81,9 +81,11 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .adot.on{display:block}
 .ci.act .adot{border-color:var(--bg)}
 .cb{flex:1;min-width:0}
-.cr1{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
-.cn{font-size:.92rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
-.ctime{font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.cr1{display:flex;align-items:center;gap:0px;margin-bottom:3px}
+.cn-wrap{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden}
+.cn{font-size:.92rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vbdg{display:inline-flex;align-items:center;flex-shrink:0}
+.ctime{font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0;margin-left:6px}
 .cr2{display:flex;align-items:center;gap:5px}
 .cm{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;font-weight:500}
 .cbg{background:var(--blue);color:#fff;font-size:.64rem;font-weight:700;min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0}
@@ -111,7 +113,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 /* Fix emoji in textarea */
 .iw textarea{font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji','Manrope',sans-serif!important;}
 .chin{flex:1;min-width:0}
-.chn{font-size:.93rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chn{font-size:.93rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
 .chs{font-size:.72rem;color:var(--muted)}
 .chs.on{color:var(--ok)}
 
@@ -235,6 +237,11 @@ a.ml{color:var(--blue);text-decoration:underline;word-break:break-all}
 .snd:hover{background:#152044}
 .snd:disabled{background:var(--brd);cursor:default}
 .snd svg{width:19px;height:19px;color:#fff}
+/* На мобиле кнопка отправки всегда видна */
+@media(max-width:700px){
+  .snd:disabled{background:#c5cce8}
+  .abt{color:var(--navy)!important}
+}
 
 /* EMOJI PICKER */
 #emj{position:absolute;bottom:100%;right:10px;background:var(--wh);border:1px solid var(--brd);border-radius:16px;box-shadow:0 8px 30px rgba(11,21,53,.15);padding:10px;display:none;width:300px;max-height:260px;overflow-y:auto;z-index:100}
@@ -298,7 +305,6 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 .msg-flash .mb,.msg-flash .pg{animation:msgFlash .9s ease}
 @keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .ci{animation:fu .18s ease both}
-@keyframes spin{to{transform:rotate(360deg)}}
 
 /* MOBILE */
 @media(max-width:700px){
@@ -318,7 +324,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
   #nc{display:none}
   #ch{height:62px;flex-shrink:0}
   .chav{width:42px;height:42px}
-  .chn{font-size:1.05rem}
+  .chn{font-size:1.05rem;display:flex;align-items:center;gap:4px}
   .chs{font-size:.8rem}
   .mb{font-size:1rem;max-width:82%}
   .mtext{padding:9px 13px 0;font-size:1rem}
@@ -475,7 +481,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     <div style="display:flex;flex-direction:column;align-items:center;padding:20px 20px 14px;gap:10px">
       <div id="up-av" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;overflow:hidden;flex-shrink:0"></div>
       <div style="text-align:center">
-        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535"></div>
+        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px"></div>
         <div id="up-user" style="font-size:.85rem;color:#1e50ff;font-weight:600;margin-top:3px"></div>
         <div id="up-status" style="font-size:.78rem;color:#7a87ac;margin-top:4px"></div>
         <div id="up-bio" style="font-size:.82rem;color:#7a87ac;margin-top:8px;line-height:1.5;max-width:260px;display:none"></div>
@@ -557,31 +563,6 @@ function subscribePresence(uid,cb){
     .subscribe();
 }
 let presenceSub=null;
-
-// ── PIN REALTIME ──
-let pinSub=null;
-function subscribePinChanges(partnerId){
-  if(pinSub){sb.removeChannel(pinSub);pinSub=null;}
-  const chatId=makeChatId(ME.id,partnerId);
-  pinSub=sb.channel('pin-'+chatId)
-    .on('postgres_changes',{event:'*',schema:'public',table:'pinned_messages',filter:`chat_id=eq.${chatId}`},p=>{
-      if(p.new&&p.new.message_id){S.pin[partnerId]=p.new.message_id;sv();Z.upb();Z.rm();}
-      else if(p.eventType==='DELETE'){delete S.pin[partnerId];sv();Z.upb();Z.rm();}
-    })
-    .subscribe();
-}
-
-// ── PHOTO UPLOAD ──
-async function uploadPhoto(blobUrl){
-  try{
-    const resp=await fetch(blobUrl);const blob=await resp.blob();
-    const ext=(blob.type.split('/')[1]||'jpg').replace('jpeg','jpg');
-    const path=`${ME.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const {error}=await sb.storage.from('chat-photos').upload(path,blob,{contentType:blob.type,upsert:false});
-    if(error){console.warn('photo upload err',error);return null;}
-    return sb.storage.from('chat-photos').getPublicUrl(path).data.publicUrl;
-  }catch(e){console.warn('uploadPhoto',e);return null;}
-}
 
 async function loadProfile(){
   try{
@@ -730,20 +711,7 @@ function subscribeTyping(partnerId){
       if(payload.payload?.uid===ME.id) return;
       showTyping();
     })
-    .on('broadcast',{event:'read'},payload=>{
-      if(payload.payload?.uid===ME.id) return;
-      // Собеседник видит наш чат — все исходящие синие
-      currentMsgs.forEach(m=>{if(m.out&&m.status!=='sending')m.status='read';});
-      Z.rm();
-    })
-    .subscribe(status=>{
-      if(status==='SUBSCRIBED'){
-        // Сообщаем что мы открыли чат
-        setTimeout(()=>{
-          if(typingChannel) typingChannel.send({type:'broadcast',event:'read',payload:{uid:ME.id}});
-        },500);
-      }
-    });
+    .subscribe();
 }
 
 // ── SUBSCRIBE TO NEW MESSAGES (for blue dot notifications) ──
@@ -840,10 +808,6 @@ function subscribeChatMessages(partnerId){
       });
       Z.rm();
       const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
-      // Входящее — отправляем read receipt
-      if(!isOut&&typingChannel){
-        setTimeout(()=>{if(typingChannel)typingChannel.send({type:'broadcast',event:'read',payload:{uid:ME.id}});},300);
-      }
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`chat_id=eq.${chatId}`},payload=>{
       const m=payload.new;
@@ -966,15 +930,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     items.slice(0,Math.max(0,5-S.photos.length)).forEach(i=>{
       const f=i.getAsFile();
       if(!f||f.size>5*1024*1024) return;
-      const blobUrl=URL.createObjectURL(f);
-      S.photos.push({url:blobUrl,uploading:true});
-      Z.uph();Z.ck();
-      uploadPhoto(blobUrl).then(pubUrl=>{
-        const idx=S.photos.findIndex(p=>p.url===blobUrl);
-        if(idx>=0){pubUrl?S.photos[idx]={url:pubUrl,uploading:false}:S.photos.splice(idx,1);}
-        Z.uph();Z.ck();
-      });
+      S.photos.push({url:URL.createObjectURL(f)});
     });
+    Z.uph();Z.ck();
   });
 });
 
@@ -1003,7 +961,10 @@ const Z={
       const l=document.createElement('div');l.className='llbl';l.textContent='Чаты';s.appendChild(l);
       rv.forEach((c,i)=>s.appendChild(Z.bci(c,fv.length+i)));
     }
-    // пустой список — подсказка не нужна
+    if(!rv.length&&fv.length){
+      const e=document.createElement('div');e.style.cssText='padding:20px 16px;text-align:center;color:var(--muted);font-size:.82rem';
+      e.textContent='Нажмите 🔍 чтобы найти людей';s.appendChild(e);
+    }
     if(!fv.length&&!rv.length){
       const e=document.createElement('div');e.style.cssText='padding:40px 16px;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.8';
       e.innerHTML='Нет чатов.<br>Нажмите 🔍 и введите @username';s.appendChild(e);
@@ -1083,16 +1044,17 @@ const Z={
     el.appendChild(aw);
     const cb=document.createElement('div'); cb.className='cb';
     const r1=document.createElement('div'); r1.className='cr1';
+    // Обёртка имя + галочка
+    const nmWrap=document.createElement('div'); nmWrap.className='cn-wrap';
     const nm=document.createElement('span'); nm.className='cn'; nm.textContent=c.name;
-    // Галочка верификации
+    nmWrap.appendChild(nm);
     if(c.verified){
-      const vbadge=document.createElement('span');
-      vbadge.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
-      vbadge.style.cssText='display:inline-flex;align-items:center;margin-left:3px;flex-shrink:0';
-      nm.appendChild(vbadge);
+      const vbadge=document.createElement('span'); vbadge.className='vbdg';
+      vbadge.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      nmWrap.appendChild(vbadge);
     }
-    if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nm,tm);}
-    else r1.append(nm);
+    if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nmWrap,tm);}
+    else r1.append(nmWrap);
     const r2=document.createElement('div'); r2.className='cr2';
     const mg=document.createElement('span'); mg.className='cm';
     if(c.fav) mg.textContent='Сохранённые заметки';
@@ -1108,11 +1070,6 @@ const Z={
   // OPEN CHAT
   async oc(id){
     if(!id) return;
-    // Сразу отписываемся от предыдущего чата
-    if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
-    if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
-    if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
-    if(pinSub){sb.removeChannel(pinSub);pinSub=null;}
     S.cur=id;
     unreadCounts[id]=0;
     Z.rl();
@@ -1135,20 +1092,21 @@ const Z={
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
     else{chav.textContent=c.ini;}
-    // Имя + galochka verified в шапке чата
     Q('chn').innerHTML='';
-    Q('chn').appendChild(document.createTextNode(c.name));
+    const nameSpan=document.createElement('span');
+    nameSpan.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0';
+    nameSpan.textContent=c.name;
+    Q('chn').appendChild(nameSpan);
     if(c.verified){
       const vb=document.createElement('svg');
-      vb.setAttribute('width','14');vb.setAttribute('height','14');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
-      vb.style.cssText='display:inline-flex;align-items:center;margin-left:4px;vertical-align:middle;flex-shrink:0';
-      vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
+      vb.setAttribute('width','16');vb.setAttribute('height','16');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
+      vb.style.cssText='flex-shrink:0;display:block';
+      vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
       Q('chn').appendChild(vb);
     }
     const chs=Q('chs');
     if(!c.fav&&id!==ME.id){
       getPresence(id).then(p=>{
-        if(S.cur!==id) return; // guard: не перезаписываем если уже другой чат открыт
         currentPresenceText=presenceText(p);
         currentPresenceClass='chs'+(isOnline(p)?' on':'');
         chs.textContent=currentPresenceText;
@@ -1163,9 +1121,7 @@ const Z={
         chs.className=currentPresenceClass;
       });
     } else {
-      // Избранное или чат с самим собой — сбрасываем состояние presence
-      currentPresenceText='';currentPresenceClass='chs';
-      chs.textContent='';chs.className='chs';
+      chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
     }
     Z.upb(); S.photos=[]; Z.uph(); Z.cs();
     const tb=Q('typing-bar');if(tb)tb.style.display='none';
@@ -1175,14 +1131,7 @@ const Z={
     } else {
       Q('msgs').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.82rem">Загрузка...</div>';
       await loadMessages(id);
-      // Загружаем закреп из Supabase
-      try{
-        const chatId=makeChatId(ME.id,id);
-        const {data:pinData}=await sb.from('pinned_messages').select('message_id').eq('chat_id',chatId).maybeSingle();
-        if(pinData?.message_id){S.pin[id]=pinData.message_id;sv();}
-      }catch(e){}
       subscribeChatMessages(id);
-      subscribePinChanges(id);
       subscribeTyping(id);
     }
     setTimeout(()=>{const m=Q('msgs');if(m)m.scrollTop=m.scrollHeight;},30);
@@ -1193,7 +1142,6 @@ const Z={
     if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
     if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
     if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
-    if(pinSub){sb.removeChannel(pinSub);pinSub=null;}
     const tb=Q('typing-bar');if(tb)tb.style.display='none';
   },
 
@@ -1323,10 +1271,10 @@ const Z={
   // SEND
   async sm(){
     const ta=Q('ta'), rawText=(ta?ta.value:''), hp=S.photos.length>0;
+    // Правильная обработка текста с эмодзи (Array.from обрабатывает суррогатные пары)
     const text=Array.from(rawText).join('').trim();
     const capInp=Q('cap-inp'), capText=capInp?Array.from(capInp.value||'').join('').trim():'';
     if((!text&&!hp)||!S.cur) return;
-    if(S.photos.some(p=>p.uploading)){alert('Подождите, фото загружается...');return;}
 
     if(S.mode==='edit'&&S.mdata){
       const m=currentMsgs.find(x=>x.id===S.mdata.mid);
@@ -1393,15 +1341,10 @@ const Z={
     if(!files.length) return;
     files.forEach(f=>{
       if(f.size>5*1024*1024){alert('Файл '+f.name+' больше 5 МБ');return;}
-      const blobUrl=URL.createObjectURL(f);
-      S.photos.push({url:blobUrl,uploading:true});
-      Z.uph();Z.ck();
-      uploadPhoto(blobUrl).then(pubUrl=>{
-        const idx=S.photos.findIndex(p=>p.url===blobUrl);
-        if(idx>=0){pubUrl?S.photos[idx]={url:pubUrl,uploading:false}:S.photos.splice(idx,1);}
-        Z.uph();Z.ck();
-      });
+      const url=URL.createObjectURL(f);
+      S.photos.push({url});
     });
+    Z.uph();Z.ck();
   },
   uph(){
     const pp=Q('pp');pp.innerHTML='';
@@ -1410,19 +1353,11 @@ const Z={
     S.photos.forEach((p,i)=>{
       const item=document.createElement('div');item.className='ppitem';
       const img=document.createElement('img');img.src=p.url;item.appendChild(img);
-      if(p.uploading){
-        const ov=document.createElement('div');
-        ov.style.cssText='position:absolute;inset:0;background:rgba(11,21,53,.5);display:flex;align-items:center;justify-content:center;border-radius:7px';
-        ov.innerHTML='<div style="width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>';
-        item.appendChild(ov);
-      } else {
-        const rm=document.createElement('button');rm.innerHTML='✕';
-        rm.onclick=()=>{S.photos.splice(i,1);Z.uph();Z.ck();};
-        item.appendChild(rm);
-      }
-      pp.appendChild(item);
+      const rm=document.createElement('button');rm.innerHTML='✕';
+      rm.onclick=()=>{S.photos.splice(i,1);Z.uph();Z.ck();};
+      item.appendChild(rm);pp.appendChild(item);
     });
-    if(S.photos.length<5&&!S.photos.some(p=>p.uploading)){
+    if(S.photos.length<5){
       const add=document.createElement('div');add.className='addp';
       add.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
       add.onclick=Z.tap.bind(Z);pp.appendChild(add);
@@ -1628,9 +1563,9 @@ async function openUP(uid){
   Q('up-name').appendChild(document.createTextNode(prof.full_name||prof.username||'Пользователь'));
   if(prof.verified){
     const vb=document.createElement('svg');
-    vb.setAttribute('width','16');vb.setAttribute('height','16');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
-    vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
-    vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
+    vb.setAttribute('width','18');vb.setAttribute('height','18');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
+    vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle;flex-shrink:0';
+    vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
     Q('up-name').appendChild(vb);
   }
   // username всегда один @
@@ -1645,19 +1580,40 @@ async function openUP(uid){
 }
 function closeUP(){Q('upov').style.display='none';}
 
-// ── MOBILE KEYBOARD FIX (iOS Safari) ──
+// ── MOBILE KEYBOARD FIX (iOS Safari & Android) ──
+// На iOS Safari visualViewport двигается вверх при открытии клавиатуры
 if(window.visualViewport){
+  let ticking=false;
   const updateLayout=()=>{
-    const pc=Q('pc');if(!pc||!pc.classList.contains('open')) return;
-    const vv=window.visualViewport;
-    pc.style.height=vv.height+'px';
-    pc.style.top=vv.offsetTop+'px';
+    if(ticking) return;
+    ticking=true;
+    requestAnimationFrame(()=>{
+      ticking=false;
+      const pc=Q('pc');if(!pc||!pc.classList.contains('open')) return;
+      const vv=window.visualViewport;
+      const h=Math.round(vv.height);
+      const t=Math.round(vv.offsetTop);
+      pc.style.height=h+'px';
+      pc.style.top=t+'px';
+      pc.style.bottom='auto';
+    });
   };
-  window.visualViewport.addEventListener('resize',updateLayout);
-  window.visualViewport.addEventListener('scroll',updateLayout);
+  window.visualViewport.addEventListener('resize',updateLayout,{passive:true});
+  window.visualViewport.addEventListener('scroll',updateLayout,{passive:true});
+  // iOS: форсируем обновление при фокусе на поле ввода
   document.addEventListener('focus',e=>{
     if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
-      setTimeout(updateLayout,300);setTimeout(updateLayout,600);
+      updateLayout();
+      setTimeout(updateLayout,100);
+      setTimeout(updateLayout,400);
+    }
+  },true);
+  document.addEventListener('blur',e=>{
+    if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
+      setTimeout(()=>{
+        const pc=Q('pc');if(!pc||!pc.classList.contains('open')) return;
+        pc.style.height='';pc.style.top='';pc.style.bottom='';
+      },100);
     }
   },true);
 }
