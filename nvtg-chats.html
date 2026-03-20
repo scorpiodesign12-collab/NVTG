@@ -511,7 +511,7 @@ function presenceText(p){
   if(!p) return 'не в сети';
   const diff=Math.floor((Date.now()-new Date(p.last_seen))/1000);
   // Считаем онлайн только если last_seen обновлялся недавно (до 70 сек)
-  if(p.is_online && diff<=70) return 'в сети';
+  if(p.is_online && diff<=60) return 'в сети';
   if(diff<60) return 'был(а) только что';
   if(diff<3600){const m=Math.floor(diff/60);return `был(а) ${m} мин назад`;}
   if(diff<86400){const h=Math.floor(diff/3600);return `был(а) ${h} ${h===1?'час':h<5?'часа':'часов'} назад`;}
@@ -519,7 +519,7 @@ function presenceText(p){
 }
 function isOnline(p){
   if(!p||!p.is_online) return false;
-  return Math.floor((Date.now()-new Date(p.last_seen))/1000)<=70;
+  return Math.floor((Date.now()-new Date(p.last_seen))/1000)<=60;
 }
 async function getPresence(uid){
   const {data}=await sb.from('presence').select('*').eq('user_id',uid).single();
@@ -538,12 +538,12 @@ async function loadProfile(){
     if(!user){location.href='nvtg-index.html';return;}
     ME.id=user.id;
 
-    // Если аккаунт сменился — чистим недавних
+    // При каждом входе проверяем uid — если сменился, чистим недавних
     const savedUid=localStorage.getItem('nvtg_uid');
-    if(savedUid && savedUid!==ME.id){
+    if(savedUid !== ME.id){
       localStorage.removeItem('nvtg_recent');
+      localStorage.setItem('nvtg_uid', ME.id);
     }
-    localStorage.setItem('nvtg_uid',ME.id);
 
     const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).single();
     if(p){
@@ -562,6 +562,12 @@ async function loadProfile(){
 
 async function doLogout(){
   await sb.auth.signOut();
+  // Очищаем всё при выходе
+  localStorage.removeItem('nvtg_uid');
+  localStorage.removeItem('nvtg_recent');
+  localStorage.removeItem('nvtg_name');
+  localStorage.removeItem('nvtg_user');
+  localStorage.removeItem('nvtg_av');
   location.href='nvtg-index.html';
 }
 
@@ -697,10 +703,19 @@ function subscribeChatMessages(partnerId){
   if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
   const chatId=makeChatId(ME.id,partnerId);
   chatSub=sb.channel('chat-'+chatId)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`chat_id=eq.${chatId}`},async payload=>{
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`chat_id=eq.${chatId}`},payload=>{
       const m=payload.new;
-      if(m.sender_id===ME.id) return; // already added optimistically
-      currentMsgs.push({id:m.id,text:m.text||'',out:false,ts:new Date(m.created_at).getTime(),status:'read',read:true,photos:m.photos||[],replyTo:m.reply_to||null,replyName:m.reply_name||null,edited:m.edited||false,deleted:false,dbId:m.id});
+      // Не добавляем если уже есть (мы сами отправили и уже добавили)
+      if(currentMsgs.find(x=>x.dbId===m.id)) return;
+      const isOut=m.sender_id===ME.id;
+      currentMsgs.push({
+        id:m.id,text:m.text||'',out:isOut,
+        ts:new Date(m.created_at).getTime(),
+        status:'delivered',read:true,
+        photos:m.photos||[],
+        replyTo:m.reply_to||null,replyName:m.reply_name||null,
+        edited:m.edited||false,deleted:false,dbId:m.id
+      });
       Z.rm();
       const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
     })
@@ -709,7 +724,7 @@ function subscribeChatMessages(partnerId){
       const idx=currentMsgs.findIndex(x=>x.dbId===m.id);
       if(idx>=0){
         if(m.deleted_for_all){currentMsgs.splice(idx,1);}
-        else{currentMsgs[idx]={...currentMsgs[idx],text:m.text||'',edited:m.edited||false,deleted:m.deleted_for_all||false};}
+        else{currentMsgs[idx]={...currentMsgs[idx],text:m.text||'',edited:m.edited||false};}
         Z.rm();
       }
     })
@@ -718,25 +733,51 @@ function subscribeChatMessages(partnerId){
 
 async function sendMessage(text,photos,replyTo,replyName){
   if(!ME.id||!S.cur||S.cur==='fav') return;
+  if(!text&&(!photos||!photos.length)) return;
   const chatId=makeChatId(ME.id,S.cur);
+
+  // Оптимистично добавляем сообщение в список
   const tmpId='tmp-'+Date.now();
-  // Optimistic
-  const tmp={id:tmpId,text,out:true,ts:Date.now(),status:'sending',read:false,photos:photos||[],replyTo,replyName,edited:false,deleted:false,dbId:null};
+  const tmp={id:tmpId,text:text||'',out:true,ts:Date.now(),status:'sending',read:true,photos:photos||[],replyTo:replyTo||null,replyName:replyName||null,edited:false,deleted:false,dbId:null};
   currentMsgs.push(tmp);
-  Z.rm();const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  Z.rm();
+  const msgsEl=Q('msgs');if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
+
   try{
     const {data,error}=await sb.from('messages').insert({
-      chat_id:chatId,sender_id:ME.id,text,photos:photos||[],
-      reply_to:replyTo||null,reply_name:replyName||null
+      chat_id:chatId,
+      sender_id:ME.id,
+      text:text||'',
+      photos:photos||[],
+      reply_to:replyTo||null,
+      reply_name:replyName||null
     }).select().single();
-    if(error) throw error;
+
+    if(error){
+      console.warn('Send error',error);
+      // Удаляем оптимистичное сообщение при ошибке
+      const idx=currentMsgs.findIndex(m=>m.id===tmpId);
+      if(idx>=0) currentMsgs.splice(idx,1);
+      Z.rm();
+      return;
+    }
+
+    // Обновляем временное сообщение реальным
     const idx=currentMsgs.findIndex(m=>m.id===tmpId);
-    if(idx>=0){currentMsgs[idx]={...currentMsgs[idx],id:data.id,status:'delivered',dbId:data.id};}
+    if(idx>=0){
+      currentMsgs[idx]={...currentMsgs[idx],id:data.id,status:'delivered',dbId:data.id,ts:new Date(data.created_at).getTime()};
+    }
     Z.rm();
+    if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
+
+    // Обновляем последнее сообщение в списке чатов
+    const chat=CHATS.find(c=>c.id===S.cur);
+    if(chat){chat.lastText=photos?.length?'📷 Фото':text;chat.lastTs=Date.now();}
+    Z.rl();
   }catch(e){
-    console.warn('Send error',e);
+    console.warn('sendMessage exception',e);
     const idx=currentMsgs.findIndex(m=>m.id===tmpId);
-    if(idx>=0) currentMsgs[idx].status='error';
+    if(idx>=0) currentMsgs.splice(idx,1);
     Z.rm();
   }
 }
@@ -817,8 +858,22 @@ const Z={
     const s=Q('lscroll'); s.innerHTML='';
     const fv=CHATS.filter(c=>c.fav);
     const rv=CHATS.filter(c=>!c.fav);
-    if(fv.length){const l=document.createElement('div');l.className='llbl';l.textContent='Избранное';s.appendChild(l);fv.forEach((c,i)=>s.appendChild(Z.bci(c,i)));}
-    if(rv.length){const l=document.createElement('div');l.className='llbl';l.textContent='Чаты';s.appendChild(l);rv.forEach((c,i)=>s.appendChild(Z.bci(c,fv.length+i)));}
+    // Избранное всегда сверху
+    fv.forEach((c,i)=>{
+      const favMsgs=JSON.parse(localStorage.getItem('nv4_fav')||'[]');
+      const lastFav=favMsgs[favMsgs.length-1];
+      const cFav={...c,lastText:lastFav?(lastFav.photos?.length?'📷 Фото':lastFav.text):'Сохранённые заметки',lastTs:lastFav?lastFav.ts:0};
+      s.appendChild(Z.bci(cFav,i));
+    });
+    if(rv.length){
+      if(fv.length){const sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--brd);margin:4px 0';s.appendChild(sep);}
+      const l=document.createElement('div');l.className='llbl';l.textContent='Чаты';s.appendChild(l);
+      rv.forEach((c,i)=>s.appendChild(Z.bci(c,fv.length+i)));
+    }
+    if(!rv.length&&fv.length){
+      const e=document.createElement('div');e.style.cssText='padding:20px 16px;text-align:center;color:var(--muted);font-size:.82rem';
+      e.textContent='Нажмите 🔍 чтобы найти людей';s.appendChild(e);
+    }
     if(!fv.length&&!rv.length){
       const e=document.createElement('div');e.style.cssText='padding:40px 16px;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.8';
       e.innerHTML='Нет чатов.<br>Нажмите 🔍 и введите @username';s.appendChild(e);
@@ -1085,24 +1140,36 @@ const Z={
   async sm(){
     const ta=Q('ta'), text=(ta?ta.value:'').trim(), hp=S.photos.length>0;
     const capInp=Q('cap-inp'), capText=capInp?capInp.value.trim():'';
-    if(!text&&!hp||!S.cur) return;
+    if((!text&&!hp)||!S.cur) return;
+
     if(S.mode==='edit'&&S.mdata){
       const m=currentMsgs.find(x=>x.id===S.mdata.mid);
       if(m){
         m.text=text;m.edited=true;
-        // Update in Supabase
         if(m.dbId) sb.from('messages').update({text,edited:true}).eq('id',m.dbId).then(()=>{});
       }
       Z.cs();Z.rm();return;
     }
+
     const replyTo=S.mode==='reply'&&S.mdata?S.mdata.mid:null;
     const replyName=S.mode==='reply'&&S.mdata?S.mdata.name:null;
     const msgText=hp?capText:text;
     const photos=hp?S.photos.map(p=>p.url):[];
-    Z.cs();S.photos=[];Z.uph();if(Q('cap-inp'))Q('cap-inp').value='';Q('cap-row').style.display='none';
+
+    // Очищаем всё ДО отправки (чтобы пользователь мог сразу писать)
+    S.mode=null; S.mdata=null;
+    if(Q('strip')) Q('strip').classList.remove('on');
+    S.photos=[]; Z.uph();
+    if(Q('cap-inp')) Q('cap-inp').value='';
+    if(Q('cap-row')) Q('cap-row').style.display='none';
+    if(ta){ta.value='';ta.style.height='auto';} Z.ck();
+
     if(S.cur==='fav'){
       const msg={id:'fav-'+Date.now(),text:msgText,out:true,ts:Date.now(),status:'read',read:true,photos,replyTo,replyName};
-      currentMsgs.push(msg);localStorage.setItem('nv4_fav',JSON.stringify(currentMsgs));Z.rm();
+      currentMsgs.push(msg);
+      localStorage.setItem('nv4_fav',JSON.stringify(currentMsgs));
+      Z.rm();
+      const msgsEl=Q('msgs');if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
     } else {
       await sendMessage(msgText,photos,replyTo,replyName);
     }
