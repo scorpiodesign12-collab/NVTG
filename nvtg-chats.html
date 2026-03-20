@@ -299,7 +299,6 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 @keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .ci{animation:fu .18s ease both}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spin-icon{animation:spin 1s linear infinite;transform-origin:12px 12px}
 
 /* MOBILE */
 @media(max-width:700px){
@@ -559,12 +558,12 @@ function subscribePresence(uid,cb){
 }
 let presenceSub=null;
 
-// ── PIN SUBSCRIPTION ──
+// ── PIN REALTIME ──
 let pinSub=null;
 function subscribePinChanges(partnerId){
   if(pinSub){sb.removeChannel(pinSub);pinSub=null;}
   const chatId=makeChatId(ME.id,partnerId);
-  pinSub=sb.channel('pin-ch-'+chatId)
+  pinSub=sb.channel('pin-'+chatId)
     .on('postgres_changes',{event:'*',schema:'public',table:'pinned_messages',filter:`chat_id=eq.${chatId}`},p=>{
       if(p.new&&p.new.message_id){S.pin[partnerId]=p.new.message_id;sv();Z.upb();Z.rm();}
       else if(p.eventType==='DELETE'){delete S.pin[partnerId];sv();Z.upb();Z.rm();}
@@ -572,18 +571,16 @@ function subscribePinChanges(partnerId){
     .subscribe();
 }
 
-// ── PHOTO UPLOAD TO SUPABASE STORAGE ──
+// ── PHOTO UPLOAD ──
 async function uploadPhoto(blobUrl){
   try{
-    const resp=await fetch(blobUrl);
-    const blob=await resp.blob();
+    const resp=await fetch(blobUrl);const blob=await resp.blob();
     const ext=(blob.type.split('/')[1]||'jpg').replace('jpeg','jpg');
     const path=`${ME.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const {error}=await sb.storage.from('chat-photos').upload(path,blob,{contentType:blob.type,upsert:false});
-    if(error){console.warn('Photo upload error',error);return null;}
-    const {data}=sb.storage.from('chat-photos').getPublicUrl(path);
-    return data.publicUrl;
-  }catch(e){console.warn('uploadPhoto exception',e);return null;}
+    if(error){console.warn('photo upload err',error);return null;}
+    return sb.storage.from('chat-photos').getPublicUrl(path).data.publicUrl;
+  }catch(e){console.warn('uploadPhoto',e);return null;}
 }
 
 async function loadProfile(){
@@ -735,16 +732,16 @@ function subscribeTyping(partnerId){
     })
     .on('broadcast',{event:'read'},payload=>{
       if(payload.payload?.uid===ME.id) return;
-      // Собеседник открыл чат — все мои исходящие становятся синими
+      // Собеседник видит наш чат — все исходящие синие
       currentMsgs.forEach(m=>{if(m.out&&m.status!=='sending')m.status='read';});
       Z.rm();
     })
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){
-        // Сообщаем собеседнику что мы читаем чат
+        // Сообщаем что мы открыли чат
         setTimeout(()=>{
           if(typingChannel) typingChannel.send({type:'broadcast',event:'read',payload:{uid:ME.id}});
-        },400);
+        },500);
       }
     });
 }
@@ -843,7 +840,7 @@ function subscribeChatMessages(partnerId){
       });
       Z.rm();
       const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
-      // Если входящее сообщение — сразу отправляем read receipt собеседнику
+      // Входящее — отправляем read receipt
       if(!isOut&&typingChannel){
         setTimeout(()=>{if(typingChannel)typingChannel.send({type:'broadcast',event:'read',payload:{uid:ME.id}});},300);
       }
@@ -929,14 +926,11 @@ const EMOJIS=Array.from('😀😁😂🤣😄😅😆😊😇🥰😍🤩😘�
 let _lastW=window.innerWidth;
 function buildInputBar(){
   const row=Q('irow'); row.innerHTML='';
-  // На мобильных (включая iOS): эмодзи | textarea | скрепка | отправить
-  // На ПК: скрепка | textarea | эмодзи | отправить
   const mob=window.innerWidth<=700;
   const clip=`<button class="abt" title="Прикрепить" onclick="document.getElementById('fi').click()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>`;
   const emjbtn=`<button class="abt" id="emjbtn" title="Эмодзи" onmousedown="event.preventDefault();Z.te(event)" ontouchstart="event.preventDefault();Z.te(event)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>`;
   const textarea=`<div class="iw"><textarea id="ta" rows="1" placeholder="Сообщение..." oninput="Z.ar(this);Z.ck()" onkeydown="Z.hk(event)"></textarea></div>`;
   const send=`<button class="snd" id="snd" onclick="Z.sm()" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
-  // iOS и Android — одинаковый порядок: эмодзи | текст | скрепка | отправить
   row.innerHTML=mob?(emjbtn+textarea+clip+send):(clip+textarea+emjbtn+send);
 }
 window.addEventListener('DOMContentLoaded',()=>{
@@ -977,10 +971,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       Z.uph();Z.ck();
       uploadPhoto(blobUrl).then(pubUrl=>{
         const idx=S.photos.findIndex(p=>p.url===blobUrl);
-        if(idx>=0){
-          if(pubUrl){S.photos[idx]={url:pubUrl,uploading:false};}
-          else S.photos.splice(idx,1);
-        }
+        if(idx>=0){pubUrl?S.photos[idx]={url:pubUrl,uploading:false}:S.photos.splice(idx,1);}
         Z.uph();Z.ck();
       });
     });
@@ -1012,7 +1003,7 @@ const Z={
       const l=document.createElement('div');l.className='llbl';l.textContent='Чаты';s.appendChild(l);
       rv.forEach((c,i)=>s.appendChild(Z.bci(c,fv.length+i)));
     }
-    // (пустой список чатов — подсказка не нужна)
+    // пустой список — подсказка не нужна
     if(!fv.length&&!rv.length){
       const e=document.createElement('div');e.style.cssText='padding:40px 16px;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.8';
       e.innerHTML='Нет чатов.<br>Нажмите 🔍 и введите @username';s.appendChild(e);
@@ -1117,7 +1108,7 @@ const Z={
   // OPEN CHAT
   async oc(id){
     if(!id) return;
-    // Отписываемся от предыдущего чата СРАЗУ (иначе Избранное покажет чужие сообщения)
+    // Сразу отписываемся от предыдущего чата
     if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
     if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
     if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
@@ -1144,17 +1135,20 @@ const Z={
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
     else{chav.textContent=c.ini;}
+    // Имя + galochka verified в шапке чата
     Q('chn').innerHTML='';
-    const nameNode=document.createTextNode(c.name);
-    Q('chn').appendChild(nameNode);
+    Q('chn').appendChild(document.createTextNode(c.name));
     if(c.verified){
-      const vb=document.createElement('svg');vb.setAttribute('width','14');vb.setAttribute('height','14');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');vb.style.cssText='display:inline-flex;align-items:center;margin-left:4px;vertical-align:middle;flex-shrink:0';
+      const vb=document.createElement('svg');
+      vb.setAttribute('width','14');vb.setAttribute('height','14');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
+      vb.style.cssText='display:inline-flex;align-items:center;margin-left:4px;vertical-align:middle;flex-shrink:0';
       vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
       Q('chn').appendChild(vb);
     }
     const chs=Q('chs');
     if(!c.fav&&id!==ME.id){
       getPresence(id).then(p=>{
+        if(S.cur!==id) return; // guard: не перезаписываем если уже другой чат открыт
         currentPresenceText=presenceText(p);
         currentPresenceClass='chs'+(isOnline(p)?' on':'');
         chs.textContent=currentPresenceText;
@@ -1169,7 +1163,9 @@ const Z={
         chs.className=currentPresenceClass;
       });
     } else {
-      chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
+      // Избранное или чат с самим собой — сбрасываем состояние presence
+      currentPresenceText='';currentPresenceClass='chs';
+      chs.textContent='';chs.className='chs';
     }
     Z.upb(); S.photos=[]; Z.uph(); Z.cs();
     const tb=Q('typing-bar');if(tb)tb.style.display='none';
@@ -1183,7 +1179,7 @@ const Z={
       try{
         const chatId=makeChatId(ME.id,id);
         const {data:pinData}=await sb.from('pinned_messages').select('message_id').eq('chat_id',chatId).maybeSingle();
-        if(pinData&&pinData.message_id){S.pin[id]=pinData.message_id;sv();}
+        if(pinData?.message_id){S.pin[id]=pinData.message_id;sv();}
       }catch(e){}
       subscribeChatMessages(id);
       subscribePinChanges(id);
@@ -1327,11 +1323,9 @@ const Z={
   // SEND
   async sm(){
     const ta=Q('ta'), rawText=(ta?ta.value:''), hp=S.photos.length>0;
-    // Правильная обработка текста с эмодзи (Array.from обрабатывает суррогатные пары)
     const text=Array.from(rawText).join('').trim();
     const capInp=Q('cap-inp'), capText=capInp?Array.from(capInp.value||'').join('').trim():'';
     if((!text&&!hp)||!S.cur) return;
-    // Ждём пока фото загрузятся
     if(S.photos.some(p=>p.uploading)){alert('Подождите, фото загружается...');return;}
 
     if(S.mode==='edit'&&S.mdata){
@@ -1402,13 +1396,9 @@ const Z={
       const blobUrl=URL.createObjectURL(f);
       S.photos.push({url:blobUrl,uploading:true});
       Z.uph();Z.ck();
-      // Загружаем в Supabase Storage в фоне
       uploadPhoto(blobUrl).then(pubUrl=>{
         const idx=S.photos.findIndex(p=>p.url===blobUrl);
-        if(idx>=0){
-          if(pubUrl){S.photos[idx]={url:pubUrl,uploading:false};}
-          else{S.photos.splice(idx,1);alert('Ошибка загрузки фото');}
-        }
+        if(idx>=0){pubUrl?S.photos[idx]={url:pubUrl,uploading:false}:S.photos.splice(idx,1);}
         Z.uph();Z.ck();
       });
     });
@@ -1423,7 +1413,7 @@ const Z={
       if(p.uploading){
         const ov=document.createElement('div');
         ov.style.cssText='position:absolute;inset:0;background:rgba(11,21,53,.5);display:flex;align-items:center;justify-content:center;border-radius:7px';
-        ov.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" class="spin-icon"/></svg>';
+        ov.innerHTML='<div style="width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>';
         item.appendChild(ov);
       } else {
         const rm=document.createElement('button');rm.innerHTML='✕';
@@ -1635,10 +1625,11 @@ async function openUP(uid){
   if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
   else{av.innerHTML='';av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
   Q('up-name').innerHTML='';
-  const upNameNode=document.createTextNode(prof.full_name||prof.username||'Пользователь');
-  Q('up-name').appendChild(upNameNode);
+  Q('up-name').appendChild(document.createTextNode(prof.full_name||prof.username||'Пользователь'));
   if(prof.verified){
-    const vb=document.createElement('svg');vb.setAttribute('width','16');vb.setAttribute('height','16');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
+    const vb=document.createElement('svg');
+    vb.setAttribute('width','16');vb.setAttribute('height','16');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
+    vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
     vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
     Q('up-name').appendChild(vb);
   }
@@ -1664,11 +1655,9 @@ if(window.visualViewport){
   };
   window.visualViewport.addEventListener('resize',updateLayout);
   window.visualViewport.addEventListener('scroll',updateLayout);
-  // iOS: также обновляем при фокусе на поле ввода
   document.addEventListener('focus',e=>{
     if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
-      setTimeout(updateLayout,300);
-      setTimeout(updateLayout,600);
+      setTimeout(updateLayout,300);setTimeout(updateLayout,600);
     }
   },true);
 }

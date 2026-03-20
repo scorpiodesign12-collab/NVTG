@@ -187,23 +187,25 @@ const sb=supabase.createClient(SURL,SKEY);
 const Q=id=>document.getElementById(id);
 const BIO=50;
 const GRADS=[['#1e50ff','#6b8fff'],['#f093fb','#f5576c'],['#4facfe','#00f2fe'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#a18cd1','#fbc2eb']];
-let D={id:'',name:'',user:'',bio:'',av:''};
+let D={id:'',name:'',user:'',bio:'',av:'',verified:false};
 
 function toggleSB(open){Q('sb').classList.toggle('open',open);Q('dov').classList.toggle('on',open);}
 async function doLogout(){await sb.auth.signOut();location.href='nvtg-index.html';}
 
 function render(){
   const full=D.name||'Пользователь';
-  // Имя с галочкой если verified
+  // Имя + галочка verified
   Q('hn').innerHTML='';
   Q('hn').appendChild(document.createTextNode(full));
   if(D.verified){
-    const vb=document.createElement('svg');vb.setAttribute('width','18');vb.setAttribute('height','18');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
+    const vb=document.createElement('svg');
+    vb.setAttribute('width','18');vb.setAttribute('height','18');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
+    vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
     vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
     Q('hn').appendChild(vb);
   }
-  Q('hu').textContent=D.user?('@'+D.user.replace(/^@/,'')):'';
-  Q('rusr').textContent=D.user?('@'+D.user.replace(/^@/,'')):'';
+  Q('hu').textContent=D.user?('@'+D.user.replace(/^@/,'')):D.user;
+  Q('rusr').textContent=D.user?('@'+D.user.replace(/^@/,'')):D.user;
   Q('rnm').textContent=full;
   const g=GRADS[D.user.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%GRADS.length];
   Q('avc').style.background=`linear-gradient(135deg,${g[0]},${g[1]})`;
