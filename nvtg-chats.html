@@ -81,8 +81,8 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .adot.on{display:block}
 .ci.act .adot{border-color:var(--bg)}
 .cb{flex:1;min-width:0}
-.cr1{display:flex;align-items:center;gap:4px;margin-bottom:3px}
-.cn{font-size:.92rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cr1{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
+.cn{font-size:.92rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
 .ctime{font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .cr2{display:flex;align-items:center;gap:5px}
 .cm{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;font-weight:500}
@@ -108,10 +108,10 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 @keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 .typing-text{font-size:.72rem;color:var(--muted);font-style:italic}
 
-/* Fix emoji in textarea */
-.iw textarea{font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji','Manrope',sans-serif!important;}
+/* Fix emoji in textarea - Manrope первым, emoji как fallback */
+.iw textarea{font-family:'Manrope','Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif!important;word-spacing:normal;letter-spacing:normal;}
 .chin{flex:1;min-width:0}
-.chn{font-size:.93rem;font-weight:700;display:flex;align-items:center;white-space:nowrap;overflow:hidden}
+.chn{font-size:.93rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chs{font-size:.72rem;color:var(--muted)}
 .chs.on{color:var(--ok)}
 
@@ -311,8 +311,8 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     height:100dvh;
   }
   #pc.open{transform:translateX(0)}
-  #ia{flex-shrink:0;position:relative;z-index:5}
-  #msgs{flex:1;overflow-y:auto;min-height:0}
+  #ia{flex-shrink:0;position:relative;z-index:5;background:var(--wh)}
+  #msgs{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain}
   .back{display:flex}
   #nc{display:none}
   #ch{height:62px;flex-shrink:0}
@@ -324,7 +324,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
   .mmeta{font-size:.7rem;padding:2px 10px 7px}
   .mmeta .mt{font-size:.7rem}
   .tks svg{width:15px;height:15px}
-  .ir{padding:12px 10px;padding-bottom:max(14px,env(safe-area-inset-bottom,14px))}
+  .ir{padding:10px 10px;padding-bottom:max(12px,env(safe-area-inset-bottom,12px))}
   .iw{min-height:50px;padding:10px 12px}
   .iw textarea{font-size:1.05rem}
   .snd{width:50px;height:50px}
@@ -474,7 +474,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     <div style="display:flex;flex-direction:column;align-items:center;padding:20px 20px 14px;gap:10px">
       <div id="up-av" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;overflow:hidden;flex-shrink:0"></div>
       <div style="text-align:center">
-        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535;display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:0px"></div>
+        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535"></div>
         <div id="up-user" style="font-size:.85rem;color:#1e50ff;font-weight:600;margin-top:3px"></div>
         <div id="up-status" style="font-size:.78rem;color:#7a87ac;margin-top:4px"></div>
         <div id="up-bio" style="font-size:.82rem;color:#7a87ac;margin-top:8px;line-height:1.5;max-width:260px;display:none"></div>
@@ -1038,19 +1038,15 @@ const Z={
     const cb=document.createElement('div'); cb.className='cb';
     const r1=document.createElement('div'); r1.className='cr1';
     const nm=document.createElement('span'); nm.className='cn'; nm.textContent=c.name;
-    // Галочка — СНАРУЖИ .cn чтобы overflow:hidden её не срезал
-    const vsvg='<svg width="15" height="15" viewBox="0 0 24 24" fill="#1e50ff" style="flex-shrink:0;display:block"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    if(c.lastTs){
-      const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);
-      // nm + badge + spacer + time
-      const left=document.createElement('div');left.style.cssText='display:flex;align-items:center;gap:3px;min-width:0;flex:1;overflow:hidden';
-      left.appendChild(nm);
-      if(c.verified){const vb=document.createElement('span');vb.innerHTML=vsvg;vb.style.cssText='flex-shrink:0;display:flex;align-items:center';left.appendChild(vb);}
-      r1.append(left,tm);
-    } else {
-      r1.appendChild(nm);
-      if(c.verified){const vb=document.createElement('span');vb.innerHTML=vsvg;vb.style.cssText='flex-shrink:0;display:flex;align-items:center';r1.appendChild(vb);}
+    // Галочка верификации
+    if(c.verified){
+      const vbadge=document.createElement('span');
+      vbadge.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      vbadge.style.cssText='display:inline-flex;align-items:center;margin-left:3px;flex-shrink:0';
+      nm.appendChild(vbadge);
     }
+    if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nm,tm);}
+    else r1.append(nm);
     const r2=document.createElement('div'); r2.className='cr2';
     const mg=document.createElement('span'); mg.className='cm';
     if(c.fav) mg.textContent='Сохранённые заметки';
@@ -1088,12 +1084,7 @@ const Z={
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
     else{chav.textContent=c.ini;}
-    // Шапка чата: имя + галочка
-    if(c.verified){
-      Q('chn').innerHTML=`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${c.name.replace(/</g,'&lt;')}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="#1e50ff" style="flex-shrink:0;margin-left:4px"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    } else {
-      Q('chn').textContent=c.name;
-    }
+    Q('chn').textContent=c.name;
     const chs=Q('chs');
     if(!c.fav&&id!==ME.id){
       getPresence(id).then(p=>{
@@ -1549,11 +1540,7 @@ async function openUP(uid){
   av.style.background=`linear-gradient(135deg,${GRADS[gi][0]},${GRADS[gi][1]})`;
   if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
   else{av.innerHTML='';av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
-  if(prof.verified){
-    Q('up-name').innerHTML=`${(prof.full_name||prof.username||'Пользователь').replace(/</g,'&lt;')}<svg width="18" height="18" viewBox="0 0 24 24" fill="#1e50ff" style="display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle;flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  } else {
-    Q('up-name').textContent=prof.full_name||prof.username||'Пользователь';
-  }
+  Q('up-name').textContent=prof.full_name||prof.username||'Пользователь';
   // username всегда один @
   const uname=(prof.username||'').replace(/^@/,'');
   Q('up-user').textContent=uname?('@'+uname):'';
@@ -1566,17 +1553,60 @@ async function openUP(uid){
 }
 function closeUP(){Q('upov').style.display='none';}
 
-// ── MOBILE KEYBOARD FIX ──
-if(window.visualViewport && window.innerWidth<=700){
-  const updateLayout=()=>{
-    const pc=Q('pc');if(!pc.classList.contains('open')) return;
-    const vv=window.visualViewport;
-    pc.style.height=vv.height+'px';
-    pc.style.top=vv.offsetTop+'px';
-  };
-  window.visualViewport.addEventListener('resize',updateLayout);
-  window.visualViewport.addEventListener('scroll',updateLayout);
-}
+// ── MOBILE KEYBOARD FIX (iOS Safari portrait + Android) ──
+(function(){
+  if(!window.visualViewport) return;
+  const vv=window.visualViewport;
+
+  function applyLayout(){
+    const pc=Q('pc');
+    if(!pc) return;
+    const h=Math.round(vv.height);
+    const t=Math.round(vv.offsetTop);
+    if(pc.classList.contains('open')){
+      pc.style.height=h+'px';
+      pc.style.top=t+'px';
+      pc.style.bottom='auto';
+    } else {
+      pc.style.height='';
+      pc.style.top='';
+      pc.style.bottom='';
+    }
+  }
+
+  let rafId=null;
+  function scheduleLayout(){
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId=requestAnimationFrame(()=>{rafId=null;applyLayout();});
+  }
+
+  vv.addEventListener('resize',scheduleLayout,{passive:true});
+  vv.addEventListener('scroll',scheduleLayout,{passive:true});
+
+  // iOS: фокус на поле ввода — клавиатура появляется с задержкой
+  document.addEventListener('focus',function(e){
+    if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
+      scheduleLayout();
+      setTimeout(scheduleLayout,150);
+      setTimeout(scheduleLayout,400);
+      setTimeout(scheduleLayout,700);
+    }
+  },true);
+
+  // Клавиатура скрылась
+  document.addEventListener('blur',function(e){
+    if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
+      setTimeout(()=>{
+        const pc=Q('pc');
+        if(pc&&pc.classList.contains('open')){
+          pc.style.height=vv.height+'px';
+          pc.style.top=vv.offsetTop+'px';
+          pc.style.bottom='auto';
+        }
+      },200);
+    }
+  },true);
+})();
 </script>
 </body>
 </html>
