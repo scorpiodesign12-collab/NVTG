@@ -482,6 +482,15 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 const Q=id=>document.getElementById(id);
 const isMob=()=>window.innerWidth<=700;
 
+// Safe localStorage (Safari блокирует в приватном режиме)
+const LS={
+  get(k,def=''){try{return localStorage.getItem(k)||def;}catch(e){return def;}},
+  set(k,v){try{localStorage.setItem(k,v);}catch(e){}},
+  rm(k){try{localStorage.removeItem(k);}catch(e){}},
+  getJ(k,def=null){try{return JSON.parse(localStorage.getItem(k))||def;}catch(e){return def;}},
+  setJ(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+
 const SURL='https://eolvegtnfebxhbhxuzwx.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbHZlZ3RuZmVieGhiaHh1end4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDk4NTQsImV4cCI6MjA4OTU4NTg1NH0.5NKUEc2h9s4_vsLpK_wlxiCBqC2OJucgBix8dmFbC3E';
 const sb=supabase.createClient(SURL,SKEY);
@@ -539,10 +548,10 @@ async function loadProfile(){
     ME.id=user.id;
 
     // При каждом входе проверяем uid — если сменился, чистим недавних
-    const savedUid=localStorage.getItem('nvtg_uid');
+    const savedUid=LS.get('nvtg_uid');
     if(savedUid !== ME.id){
-      localStorage.removeItem('nvtg_recent');
-      localStorage.setItem('nvtg_uid', ME.id);
+      LS.rm('nvtg_recent');
+      LS.set('nvtg_uid', ME.id);
     }
 
     const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).single();
@@ -550,9 +559,9 @@ async function loadProfile(){
       ME.name=p.full_name||'Пользователь';
       ME.username=(p.username||'').replace(/^@/,''); // без @
       ME.avatar=p.avatar_url||null;
-      localStorage.setItem('nvtg_name',ME.name);
-      localStorage.setItem('nvtg_user',ME.username);
-      if(ME.avatar) localStorage.setItem('nvtg_av',ME.avatar);
+      LS.set('nvtg_name',ME.name);
+      LS.set('nvtg_user',ME.username);
+      if(ME.avatar) LS.set('nvtg_av',ME.avatar);
     }
     startPresence();
     loadChats();
@@ -563,11 +572,11 @@ async function loadProfile(){
 async function doLogout(){
   await sb.auth.signOut();
   // Очищаем всё при выходе
-  localStorage.removeItem('nvtg_uid');
-  localStorage.removeItem('nvtg_recent');
-  localStorage.removeItem('nvtg_name');
-  localStorage.removeItem('nvtg_user');
-  localStorage.removeItem('nvtg_av');
+  LS.rm('nvtg_uid');
+  LS.rm('nvtg_recent');
+  LS.rm('nvtg_name');
+  LS.rm('nvtg_user');
+  LS.rm('nvtg_av');
   location.href='nvtg-index.html';
 }
 
@@ -664,7 +673,7 @@ function subscribeNewMessages(){
 // ── STATE ──
 let S={
   cur:null,
-  pin:JSON.parse(localStorage.getItem('nv4p')||'{}'),
+  pin:LS.getJ('nv4p',{}),
   mode:null,mdata:null,cmid:null,dchid:null,
   photos:[],lbphotos:[],lbidx:0,
   searchResults:[]
@@ -788,7 +797,7 @@ async function sendMessage(text,photos,replyTo,replyName){
   }
 }
 
-const sv=()=>{try{localStorage.setItem('nv4p',JSON.stringify(S.pin));}catch(e){}};
+const sv=()=>{try{LS.setJ('nv4p',S.pin);}catch(e){}};
 const ft=ts=>{const d=new Date(ts),h=d.getHours(),m=d.getMinutes();return h+':'+(m<10?'0'+m:m)};
 const gc=id=>CHATS.find(x=>x.id===id);
 
@@ -812,25 +821,19 @@ window.addEventListener('DOMContentLoaded',()=>{
     const newW=window.innerWidth;
     if(Math.abs(newW-_lastW)>50){_lastW=newW;buildInputBar();}
   });
-  // Load from localStorage first (fast), then update from Supabase
-  const n=localStorage.getItem('nvtg_name')||'Пользователь';
-  const u=localStorage.getItem('nvtg_user')||'@user';
-  const av=localStorage.getItem('nvtg_av');
-  Q('d-nm').textContent=n; Q('d-us').textContent=u;
-  const ini=n.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'НВ';
-  Q('dav-ini').textContent=ini;
-  if(av){Q('dav-img').src=av;Q('dav-img').style.display='block';Q('dav-ini').style.display='none';}
   loadProfile();
   // build emoji grid
   const eg=Q('emj');
-  eg.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-  EMOJIS.forEach(e=>{
-    const d=document.createElement('div');d.className='ej';d.textContent=e;
-    const ins=()=>{const ta=Q('ta');if(ta){const pos=ta.selectionStart;ta.value=ta.value.slice(0,pos)+e+ta.value.slice(pos);ta.selectionStart=ta.selectionEnd=pos+[...e].length;Z.ar(ta);Z.ck();}};
-    d.addEventListener('mousedown',ev=>{ev.preventDefault();ins();});
-    d.addEventListener('touchstart',ev=>{ev.preventDefault();ins();},{passive:false});
-    eg.appendChild(d);
-  });
+  if(eg){
+    eg.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    EMOJIS.forEach(e=>{
+      const d=document.createElement('div');d.className='ej';d.textContent=e;
+      const ins=()=>{const ta=Q('ta');if(ta){const pos=ta.selectionStart;ta.value=ta.value.slice(0,pos)+e+ta.value.slice(pos);ta.selectionStart=ta.selectionEnd=pos+[...e].length;Z.ar(ta);Z.ck();}};
+      d.addEventListener('mousedown',ev=>{ev.preventDefault();ins();});
+      d.addEventListener('touchstart',ev=>{ev.preventDefault();ins();},{passive:false});
+      eg.appendChild(d);
+    });
+  }
   // Add wave emoji to empty state click
   Z.rl();
   document.addEventListener('click',e=>{
@@ -866,7 +869,7 @@ const Z={
     const rv=CHATS.filter(c=>!c.fav);
     // Избранное всегда сверху
     fv.forEach((c,i)=>{
-      const favMsgs=JSON.parse(localStorage.getItem('nv4_fav')||'[]');
+      const favMsgs=LS.getJ('nv4_fav',[]);
       const lastFav=favMsgs[favMsgs.length-1];
       const cFav={...c,lastText:lastFav?(lastFav.photos?.length?'📷 Фото':lastFav.text):'Сохранённые заметки',lastTs:lastFav?lastFav.ts:0};
       s.appendChild(Z.bci(cFav,i));
@@ -892,7 +895,7 @@ const Z={
     if(!v.trim()){
       // Показываем недавних при открытии поиска
       // Чистим недавних если они принадлежат другому аккаунту
-      const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
+      const recent=JSON.parse(LS.get('nvtg_recent','[]'));
       if(recent.length){
         const l=document.createElement('div');l.className='llbl';l.textContent='Недавние';s.appendChild(l);
         const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
@@ -907,9 +910,9 @@ const Z={
           xBtn.style.cssText='background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;flex-shrink:0;display:flex;align-items:center';
           xBtn.onclick=e=>{
             e.stopPropagation();
-            const rec=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
+            const rec=JSON.parse(LS.get('nvtg_recent','[]'));
             const updated=rec.filter(x=>x.id!==r.id);
-            localStorage.setItem('nvtg_recent',JSON.stringify(updated));
+            LS.setJ('nvtg_recent',updated);
             Z.fl('');// перерисовываем
           };
           row.appendChild(xBtn);
@@ -939,8 +942,8 @@ const Z={
             else subHtml='@'+uname;
           }
           const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:'@'+uname,subHtml,photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname};
-          const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
-          if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:uname});if(recent.length>15)recent.pop();localStorage.setItem('nvtg_recent',JSON.stringify(recent));}
+          const recent=JSON.parse(LS.get('nvtg_recent','[]'));
+          if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:uname});if(recent.length>15)recent.pop();LS.setJ('nvtg_recent',recent);}
           s.appendChild(Z.bci(c,i,subHtml));
         });
       });
@@ -976,12 +979,12 @@ const Z={
 
   // OPEN CHAT
   async oc(id){
+    if(!id) return;
     S.cur=id;
     unreadCounts[id]=0;
     Z.rl();
-    // Ищем в CHATS, если нет — загружаем профиль из Supabase
     let c=gc(id);
-    if(!c&&id!=='fav'){
+    if(!c&&id!=='fav'&&ME.id){
       const {data:prof}=await sb.from('profiles').select('*').eq('id',id).single();
       if(prof){
         const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
@@ -1018,7 +1021,7 @@ const Z={
     Z.upb(); S.photos=[]; Z.uph(); Z.cs();
     currentMsgs=[];
     if(c.fav){
-      currentMsgs=JSON.parse(localStorage.getItem('nv4_fav')||'[]');Z.rm();
+      currentMsgs=LS.getJ('nv4_fav',[]);Z.rm();
     } else {
       Q('msgs').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.82rem">Загрузка...</div>';
       await loadMessages(id);
@@ -1043,7 +1046,7 @@ const Z={
       wave.onclick=async()=>{
         if(S.cur==='fav'){
           const msg={id:'fav-'+Date.now(),text:'👋',out:true,ts:Date.now(),status:'read',read:true,photos:[]};
-          currentMsgs.push(msg);localStorage.setItem('nv4_fav',JSON.stringify(currentMsgs));Z.rm();
+          currentMsgs.push(msg);LS.setJ('nv4_fav',currentMsgs);Z.rm();
         } else {await sendMessage('👋',[],null,null);}
       };
       const txt=document.createElement('p');txt.textContent='Нажми на руку, чтобы поздороваться!';
@@ -1185,7 +1188,7 @@ const Z={
     if(S.cur==='fav'){
       const msg={id:'fav-'+Date.now(),text:msgText,out:true,ts:Date.now(),status:'read',read:true,photos,replyTo,replyName};
       currentMsgs.push(msg);
-      localStorage.setItem('nv4_fav',JSON.stringify(currentMsgs));
+      LS.setJ('nv4_fav',currentMsgs);
       Z.rm();
       const msgsEl=Q('msgs');if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
     } else {
