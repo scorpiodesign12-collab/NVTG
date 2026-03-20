@@ -327,16 +327,14 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
   <nav class="dnav">
     <div class="di act">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Чаты</span></div>
-    <div class="di" onclick="D.cd()">
+    <div class="di" onclick="D.cd();location.href='nvtg-profile.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Мой профиль</span></div>
     <div class="di" onclick="Z.oc('fav');D.cd()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>Избранное</span></div>
-    <div class="di" onclick="D.cd()">
+    <div class="di" onclick="D.cd();location.href='nvtg-settings.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg><span>Настройки</span></div>
     <div class="dsep"></div>
-    <div class="di" onclick="D.cd()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="18" r="3.5" fill="currentColor" stroke="none"/></svg><span>Возможности NVTG</span></div>
-    <div class="di red" onclick="location.href='nvtg.html'">
+    <div class="di red" onclick="D.logout()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Выйти</span></div>
   </nav>
 </div>
@@ -349,7 +347,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
       <div class="lt">NV<span>TG</span></div>
       <button class="ib" onclick="Z.tls()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
     </div>
-    <div class="ls" id="lsbar"><input type="text" placeholder="Поиск..." id="lsinp" oninput="Z.fl(this.value)"></div>
+    <div class="ls" id="lsbar"><input type="text" placeholder="Поиск людей..." id="lsinp" oninput="Z.fl(this.value)"></div>
     <div id="lscroll"></div>
   </div>
 
@@ -562,7 +560,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 // DRAWER
 const D={
   od(){Q('drw').classList.add('on');Q('dov').classList.add('on');},
-  cd(){Q('drw').classList.remove('on');Q('dov').classList.remove('on');}
+  cd(){Q('drw').classList.remove('on');Q('dov').classList.remove('on');},
+  async logout(){
+    await sb.auth.signOut();
+    localStorage.clear();
+    location.href='nvtg-index.html';
+  }
 };
 
 // MAIN
@@ -576,7 +579,47 @@ const Z={
     if(rv.length){const l=document.createElement('div');l.className='llbl';l.textContent='Все чаты';s.appendChild(l);rv.forEach((c,i)=>s.appendChild(Z.bci(c,fv.length+i)));}
   },
   mf(c,f){return !f||c.name.toLowerCase().includes(f.toLowerCase());},
-  fl(v){Z.rl(v);},
+  async fl(v){
+    const s=Q('lscroll'); 
+    if(!v.trim()){Z.rl();return;}
+    // Search users in Supabase by username prefix
+    s.innerHTML='<div class="llbl">Поиск людей...</div>';
+    try{
+      const q=v.startsWith('@')?v.slice(1):v;
+      const {data:users}=await sb.from('profiles').select('id,username,full_name,avatar_url')
+        .ilike('username','@'+q+'%').limit(20);
+      const {data:myProfile}=await sb.from('profiles').select('id').eq('id',(await sb.auth.getUser()).data.user?.id).single();
+      s.innerHTML='';
+      const filtered=(users||[]).filter(u=>u.id!==myProfile?.id);
+      if(!filtered.length){
+        s.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:.85rem">Пользователи не найдены</div>';
+        return;
+      }
+      const l=document.createElement('div');l.className='llbl';l.textContent='Люди';s.appendChild(l);
+      filtered.forEach((u,i)=>{
+        // check if chat exists already
+        const existChat=CHATS.find(c=>c.sbid===u.id);
+        const chatId=existChat?existChat.id:'user_'+u.id;
+        if(!existChat){
+          const ini=(u.full_name||u.username||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+          const colors=[['#1e50ff','#6b8fff'],['#f093fb','#f5576c'],['#4facfe','#00f2fe'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#a18cd1','#fbc2eb']];
+          const gc2=colors[u.id.charCodeAt(0)%colors.length];
+          const newChat={id:chatId,sbid:u.id,name:u.full_name||u.username,sub:u.username,photo:u.avatar_url||null,ini,g:gc2,online:false};
+          if(!CHATS.find(c=>c.id===chatId)) CHATS.push(newChat);
+        }
+        const c=CHATS.find(x=>x.id===chatId)||CHATS[CHATS.length-1];
+        const el=Z.bci(c,i);
+        // highlight matching part
+        const nm=el.querySelector('.cn');
+        if(nm){
+          const txt=nm.textContent;
+          const idx=txt.toLowerCase().indexOf(q.toLowerCase());
+          if(idx>=0){nm.innerHTML=txt.slice(0,idx)+'<mark style="background:#dbeafe;border-radius:3px;color:var(--blue)">'+txt.slice(idx,idx+q.length)+'</mark>'+txt.slice(idx+q.length);}
+        }
+        s.appendChild(el);
+      });
+    }catch(e){s.innerHTML='<div style="padding:20px;text-align:center;color:var(--err);font-size:.85rem">Ошибка поиска</div>';}
+  },
   tls(){const b=Q('lsbar');b.classList.toggle('on');if(b.classList.contains('on'))Q('lsinp').focus();else{Q('lsinp').value='';Z.rl();}},
   bci(c,i){
     const msgs=S.msgs[c.id]||[], last=msgs[msgs.length-1], unread=msgs.filter(m=>!m.out&&!m.read).length;
