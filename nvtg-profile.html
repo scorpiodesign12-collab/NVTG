@@ -194,7 +194,17 @@ async function doLogout(){await sb.auth.signOut();location.href='nvtg-index.html
 
 function render(){
   const full=D.name||'Пользователь';
-  Q('hn').textContent=full;Q('hu').textContent=D.user;Q('rusr').textContent=D.user;Q('rnm').textContent=full;
+  // Имя с галочкой если verified
+  Q('hn').innerHTML='';
+  Q('hn').appendChild(document.createTextNode(full));
+  if(D.verified){
+    const vb=document.createElement('svg');vb.setAttribute('width','18');vb.setAttribute('height','18');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');vb.style.cssText='display:inline-flex;align-items:center;margin-left:5px;vertical-align:middle';
+    vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
+    Q('hn').appendChild(vb);
+  }
+  Q('hu').textContent=D.user?('@'+D.user.replace(/^@/,'')):'';
+  Q('rusr').textContent=D.user?('@'+D.user.replace(/^@/,'')):'';
+  Q('rnm').textContent=full;
   const g=GRADS[D.user.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%GRADS.length];
   Q('avc').style.background=`linear-gradient(135deg,${g[0]},${g[1]})`;
   Q('avini').textContent=full.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
@@ -268,7 +278,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(!user){location.href='nvtg-index.html';return;}
   const {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
   if(!prof){location.href='nvtg-index.html';return;}
-  D={id:prof.id,name:prof.full_name||'',user:prof.username||'@user',bio:prof.bio||'',av:prof.avatar_url||''};
+  D={id:prof.id,name:prof.full_name||'',user:prof.username||'@user',bio:prof.bio||'',av:prof.avatar_url||'',verified:prof.verified||false};
   render();
 });
 </script>
