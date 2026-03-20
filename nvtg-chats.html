@@ -327,16 +327,14 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
   <nav class="dnav">
     <div class="di act">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Чаты</span></div>
-    <div class="di" onclick="D.cd()">
+    <div class="di" onclick="location.href='nvtg-profile.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Мой профиль</span></div>
     <div class="di" onclick="Z.oc('fav');D.cd()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>Избранное</span></div>
-    <div class="di" onclick="D.cd()">
+    <div class="di" onclick="location.href='nvtg-settings.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg><span>Настройки</span></div>
     <div class="dsep"></div>
-    <div class="di" onclick="D.cd()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="18" r="3.5" fill="currentColor" stroke="none"/></svg><span>Возможности NVTG</span></div>
-    <div class="di red" onclick="location.href='nvtg.html'">
+    <div class="di red" onclick="location.href='nvtg-index.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Выйти</span></div>
   </nav>
 </div>
@@ -440,6 +438,31 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 
 <!-- FILE INPUT -->
 <input type="file" id="fi" accept="image/*" multiple style="display:none" onchange="Z.af(event)">
+
+<!-- USER PROFILE MODAL -->
+<div id="upov" style="display:none;position:fixed;inset:0;background:rgba(11,21,53,.55);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeUP()">
+  <div id="upbox" style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:0 0 30px;box-shadow:0 -8px 40px rgba(11,21,53,.18);animation:upSlide .22s ease">
+    <div style="display:flex;justify-content:center;padding:10px 0 0"><div style="width:40px;height:4px;border-radius:2px;background:#dde3f5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:20px 20px 14px;gap:10px">
+      <div id="up-av" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;overflow:hidden;flex-shrink:0"></div>
+      <div style="text-align:center">
+        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535"></div>
+        <div id="up-user" style="font-size:.85rem;color:#1e50ff;font-weight:600;margin-top:3px"></div>
+        <div id="up-status" style="font-size:.78rem;color:#7a87ac;margin-top:4px"></div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #dde3f5;margin:0 16px"></div>
+    <div style="padding:10px 16px 0;display:flex;flex-direction:column;gap:2px">
+      <div onclick="closeUP();Z.oc(window._upUid)" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-radius:12px;transition:background .12s" onmouseover="this.style.background='rgba(11,21,53,.04)'" onmouseout="this.style.background=''">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f0f3ff;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e50ff" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span style="font-size:.92rem;font-weight:600;color:#0b1535">Написать сообщение</span>
+      </div>
+    </div>
+  </div>
+</div>
+<style>@keyframes upSlide{from{transform:translateY(100%)}to{transform:none}}</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -757,53 +780,55 @@ const D={
 
 // MAIN
 const Z={
-  // LIST
+  // LIST — только реальные чаты, недавних нет
   rl(f=''){
     const s=Q('lscroll'); s.innerHTML='';
-    const fv=CHATS.filter(c=>c.fav&&Z.mf(c,f)), rv=CHATS.filter(c=>!c.fav&&Z.mf(c,f));
+    const fv=CHATS.filter(c=>c.fav);
+    const rv=CHATS.filter(c=>!c.fav);
     if(fv.length){const l=document.createElement('div');l.className='llbl';l.textContent='Избранное';s.appendChild(l);fv.forEach((c,i)=>s.appendChild(Z.bci(c,i)));}
-    // Recent searches section
-    const recentSearches=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
-    const searchOnly=recentSearches.filter(r=>!rv.find(c=>c.id===r.id));
-    if(searchOnly.length&&!f){
-      const l=document.createElement('div');l.className='llbl';l.textContent='Недавние';s.appendChild(l);
-      searchOnly.forEach((r,i)=>{
-        const fake={id:r.id,name:r.name,sub:'Недавний поиск',photo:r.avatar||null,ini:(r.name||'?')[0].toUpperCase(),g:['#7a87ac','#aab'],online:false,fav:false};
-        s.appendChild(Z.bci(fake,i));
-      });
-    }
     if(rv.length){const l=document.createElement('div');l.className='llbl';l.textContent='Чаты';s.appendChild(l);rv.forEach((c,i)=>s.appendChild(Z.bci(c,fv.length+i)));}
-    if(!fv.length&&!rv.length&&!searchOnly.length){
-      const e=document.createElement('div');e.style.cssText='padding:30px 16px;text-align:center;color:var(--muted);font-size:.88rem';e.textContent='Нет чатов. Найдите людей через поиск';s.appendChild(e);
+    if(!fv.length&&!rv.length){
+      const e=document.createElement('div');e.style.cssText='padding:40px 16px;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.8';
+      e.innerHTML='Нет чатов.<br>Нажмите 🔍 и введите @username';s.appendChild(e);
     }
   },
-  mf(c,f){return !f||c.name.toLowerCase().includes(f.toLowerCase())||(c.username||'').toLowerCase().includes(f.toLowerCase());},
+  mf(c,f){return !f||(c.username||'').toLowerCase().includes(f.toLowerCase().replace('@',''));},
+  // ПОИСК — только по username; недавние показываем только в поиске
   fl(v){
-    if(!v.trim()){Z.rl();return;}
-    // Search people in Supabase
+    const s=Q('lscroll');s.innerHTML='';
+    if(!v.trim()){
+      const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
+      if(recent.length){
+        const l=document.createElement('div');l.className='llbl';l.textContent='Недавние';s.appendChild(l);
+        const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
+        recent.forEach((r,i)=>{
+          const gi=(r.id||'a').charCodeAt(0)%GRADS.length;
+          const c={id:r.id,name:r.name,sub:r.username?('@'+r.username):'',photo:r.avatar||null,ini:(r.name||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:r.username||''};
+          s.appendChild(Z.bci(c,i));
+        });
+      } else {
+        const e=document.createElement('div');e.style.cssText='padding:30px 16px;text-align:center;color:var(--muted);font-size:.85rem';e.textContent='Введите @username для поиска';s.appendChild(e);
+      }
+      return;
+    }
+    const q=v.trim().replace('@','');
     sb.from('profiles').select('id,full_name,username,avatar_url')
-      .or(`full_name.ilike.%${v}%,username.ilike.%${v}%`)
-      .neq('id',ME.id).limit(20)
+      .ilike('username',`%${q}%`).neq('id',ME.id).limit(20)
       .then(({data})=>{
-        const s=Q('lscroll');s.innerHTML='';
-        if(!data||!data.length){const e=document.createElement('div');e.style.cssText='padding:30px 16px;text-align:center;color:var(--muted);font-size:.88rem';e.textContent='Никого не найдено';s.appendChild(e);return;}
-        const l=document.createElement('div');l.className='llbl';l.textContent='Результаты поиска';s.appendChild(l);
+        s.innerHTML='';
+        if(!data||!data.length){const e=document.createElement('div');e.style.cssText='padding:30px 16px;text-align:center;color:var(--muted);font-size:.85rem';e.textContent='Никого не найдено';s.appendChild(e);return;}
+        const l=document.createElement('div');l.className='llbl';l.textContent='Результаты';s.appendChild(l);
         const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
         data.forEach((prof,i)=>{
-          const gi=prof.id.charCodeAt(0)%GRADS.length;
-          const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:prof.username||'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||''};
-          // Add to recent searches
+          const gi=(prof.id||'a').charCodeAt(0)%GRADS.length;
+          const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:prof.username?('@'+prof.username):'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||''};
           const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
-          if(!recent.find(r=>r.id===prof.id)){
-            recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:prof.username||''});
-            if(recent.length>10) recent.pop();
-            localStorage.setItem('nvtg_recent',JSON.stringify(recent));
-          }
+          if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:prof.username||''});if(recent.length>15)recent.pop();localStorage.setItem('nvtg_recent',JSON.stringify(recent));}
           s.appendChild(Z.bci(c,i));
         });
       });
   },
-  tls(){const b=Q('lsbar');b.classList.toggle('on');if(b.classList.contains('on'))Q('lsinp').focus();else{Q('lsinp').value='';Z.rl();}},
+  tls(){const b=Q('lsbar');b.classList.toggle('on');if(b.classList.contains('on')){Q('lsinp').focus();Z.fl('');}else{Q('lsinp').value='';Z.rl();}},
   bci(c,i){
     const unread=c.fav?0:(unreadCounts[c.id]||0);
     const lastMsg=c.fav?null:null; // will show last message later
@@ -1145,7 +1170,11 @@ const Z={
     }
   },
   hhm(){Q('hm').classList.remove('on');},
-  ha(a){Z.hhm();if(a==='del'){S.dchid=S.cur;Q('ddch').classList.add('on');}},
+  ha(a){
+    Z.hhm();
+    if(a==='del'){S.dchid=S.cur;Q('ddch').classList.add('on');}
+    if(a==='prof'&&S.cur&&S.cur!=='fav') openUP(S.cur);
+  },
 
   // CHAT SEARCH
   tcs(){
@@ -1226,6 +1255,29 @@ document.addEventListener('keydown',e=>{
 let _tx=0;
 Q('drw').addEventListener('touchstart',e=>{_tx=e.touches[0].clientX;},{passive:true});
 Q('drw').addEventListener('touchend',e=>{if(_tx-e.changedTouches[0].clientX>60)D.cd();},{passive:true});
+
+// ── USER PROFILE MODAL ──
+window._upUid=null;
+async function openUP(uid){
+  window._upUid=uid;
+  const ov=Q('upov');ov.style.display='flex';
+  const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
+  const gi=(uid||'a').charCodeAt(0)%GRADS.length;
+  // Load profile
+  const {data:prof}=await sb.from('profiles').select('*').eq('id',uid).single();
+  if(!prof){ov.style.display='none';return;}
+  const av=Q('up-av');
+  av.style.background=`linear-gradient(135deg,${GRADS[gi][0]},${GRADS[gi][1]})`;
+  if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
+  else{av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
+  Q('up-name').textContent=prof.full_name||prof.username||'Пользователь';
+  Q('up-user').textContent=prof.username?('@'+prof.username):'';
+  // Presence
+  const p=await getPresence(uid);
+  Q('up-status').textContent=presenceText(p);
+  Q('up-status').style.color=p?.is_online?'var(--ok)':'var(--muted)';
+}
+function closeUP(){Q('upov').style.display='none';}
 
 // ── MOBILE KEYBOARD FIX ──
 if(window.visualViewport && window.innerWidth<=700){
