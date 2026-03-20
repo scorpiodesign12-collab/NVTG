@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
 <title>NVTG — Чаты</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -81,15 +81,16 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .adot.on{display:block}
 .ci.act .adot{border-color:var(--bg)}
 .cb{flex:1;min-width:0}
-.cr1{display:flex;align-items:center;gap:0;margin-bottom:3px;min-width:0}
-.cn{font-size:.92rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.cr1{display:flex;align-items:center;gap:4px;margin-bottom:3px;min-width:0}
+.cn{font-size:.92rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.vbdg{display:flex;align-items:center;flex-shrink:0}
 .ctime{font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .cr2{display:flex;align-items:center;gap:5px}
 .cm{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;font-weight:500}
 .cbg{background:var(--blue);color:#fff;font-size:.64rem;font-weight:700;min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0}
 
 /* CHAT PANEL */
-#pc{flex:1;display:flex;flex-direction:column;height:100dvh;min-width:0;background:var(--bg);background-image:radial-gradient(var(--brd) 1px,transparent 1px);background-size:22px 22px;position:relative}
+#pc{flex:1;display:flex;flex-direction:column;height:100dvh;min-width:0;background:var(--bg);background-image:radial-gradient(var(--brd) 1px,transparent 1px);background-size:22px 22px}
 #nc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #nc p{font-size:.88rem;color:var(--muted);font-weight:500}
 
@@ -133,14 +134,10 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .csclose{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;outline:none}
 
 /* MESSAGES */
-#msgs{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:3px;min-height:0;overscroll-behavior:contain}
+#msgs{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:3px;min-height:0}
 #msgs::-webkit-scrollbar{width:4px}
 #msgs::-webkit-scrollbar-thumb{background:rgba(11,21,53,.1);border-radius:4px}
-/* Дата — sticky под шапкой как в Telegram */
-.dchip{align-self:center;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);border-radius:12px;padding:4px 14px;font-size:.72rem;font-weight:600;color:var(--muted);margin:6px 0;flex-shrink:0;box-shadow:0 1px 4px rgba(11,21,53,.08);position:sticky;top:8px;z-index:5}
-/* Плавающая дата при скролле */
-#floatdate{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.93);backdrop-filter:blur(6px);border-radius:12px;padding:4px 16px;font-size:.72rem;font-weight:600;color:var(--muted);pointer-events:none;z-index:20;opacity:0;transition:opacity .18s;white-space:nowrap;box-shadow:0 2px 8px rgba(11,21,53,.1)}
-#floatdate.show{opacity:1}
+.dchip{align-self:center;background:rgba(255,255,255,.88);border-radius:12px;padding:4px 14px;font-size:.72rem;font-weight:600;color:var(--muted);margin:8px 0;flex-shrink:0;box-shadow:0 1px 4px rgba(11,21,53,.08)}
 .es{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 20px}
 .es .ee{font-size:3.5rem;line-height:1}
 .es p{font-size:.88rem;color:var(--muted);text-align:center;max-width:200px;line-height:1.5}
@@ -152,7 +149,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .sri svg{width:13px;height:13px;color:#fff}
 
 /* BUBBLE */
-.mb{max-width:75%;border-radius:18px;font-size:.88rem;line-height:1.45;color:var(--navy);box-shadow:0 1px 3px rgba(11,21,53,.08);word-break:break-word;position:relative;overflow:hidden}
+.mb{max-width:70%;border-radius:18px;font-size:.88rem;line-height:1.45;color:var(--navy);box-shadow:0 1px 3px rgba(11,21,53,.08);word-break:break-word;position:relative;overflow:hidden}
 .mr.out .mb{background:var(--sent);border-bottom-right-radius:4px}
 .mr.in .mb{background:var(--wh);border-bottom-left-radius:4px}
 .mr.pinned .mb{outline:2px solid var(--blue);outline-offset:1px}
@@ -303,42 +300,39 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 @keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .ci{animation:fu .18s ease both}
 @keyframes spin{to{transform:rotate(360deg)}}
+.ci{animation:fu .18s ease both}
 
 /* MOBILE */
 @media(max-width:700px){
   #pl{width:100%;border-right:none}
   #pc{
-    position:fixed;top:0;left:0;right:0;
+    position:fixed;top:0;left:0;right:0;bottom:0;
     z-index:50;
     transform:translateX(100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
     display:flex;flex-direction:column;
-    /* высота = вся область экрана, JS будет уточнять */
-    height:100%;
     height:100dvh;
   }
   #pc.open{transform:translateX(0)}
-  #ia{flex-shrink:0;z-index:5;background:var(--wh)}
-  #msgs{flex:1;overflow-y:auto;min-height:0;padding-bottom:10px}
+  #ia{flex-shrink:0;position:relative;z-index:5}
+  #msgs{flex:1;overflow-y:auto;min-height:0}
   .back{display:flex}
   #nc{display:none}
   #ch{height:62px;flex-shrink:0}
   .chav{width:42px;height:42px}
-  .chn{font-size:1.05rem;display:flex;align-items:center;gap:4px}
+  .chn{font-size:1.05rem}
   .chs{font-size:.8rem}
-  .mb{font-size:1rem;max-width:90%}
-  .pg{max-width:100%!important}
+  .mb{font-size:1rem;max-width:82%}
   .mtext{padding:9px 13px 0;font-size:1rem}
   .mmeta{font-size:.7rem;padding:2px 10px 7px}
   .mmeta .mt{font-size:.7rem}
   .tks svg{width:15px;height:15px}
-  .ir{padding:8px 8px;padding-bottom:max(10px,env(safe-area-inset-bottom,10px))}
-  .iw{min-height:46px;padding:8px 10px}
-  .iw textarea{font-size:1rem}
-  .snd{width:46px;height:46px;background:var(--navy)!important;flex-shrink:0}
-  .snd:disabled{background:#b0bcd8!important}
-  .abt{padding:8px;color:var(--navy)!important;flex-shrink:0}
-  .abt svg{width:22px!important;height:22px!important}
+  .ir{padding:12px 10px;padding-bottom:max(14px,env(safe-area-inset-bottom,14px))}
+  .iw{min-height:50px;padding:10px 12px}
+  .iw textarea{font-size:1.05rem}
+  .snd{width:50px;height:50px}
+  .abt{padding:10px}
+  .abt svg{width:24px!important;height:24px!important}
   .ai,.aw{width:54px;height:54px}
   .ai{font-size:1.05rem}
   .cn{font-size:1rem}
@@ -350,8 +344,6 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 /* PC */
 @media(min-width:701px){
   #lbc-l,#lbc-r{display:flex}
-  .mb{max-width:75%}
-  .chn{display:flex;align-items:center;gap:4px}
 }
 </style>
 </head>
@@ -422,10 +414,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
       </div>
     </div>
 
-    <div style="flex:1;position:relative;min-height:0;display:flex;flex-direction:column;overflow:hidden">
-      <div id="floatdate"></div>
-      <div id="msgs"></div>
-    </div>
+    <div id="msgs"></div>
 
     <div id="ia">
       <div id="strip">
@@ -488,7 +477,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     <div style="display:flex;flex-direction:column;align-items:center;padding:20px 20px 14px;gap:10px">
       <div id="up-av" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;overflow:hidden;flex-shrink:0"></div>
       <div style="text-align:center">
-        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap"></div>
+        <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535"></div>
         <div id="up-user" style="font-size:.85rem;color:#1e50ff;font-weight:600;margin-top:3px"></div>
         <div id="up-status" style="font-size:.78rem;color:#7a87ac;margin-top:4px"></div>
         <div id="up-bio" style="font-size:.82rem;color:#7a87ac;margin-top:8px;line-height:1.5;max-width:260px;display:none"></div>
@@ -571,16 +560,35 @@ function subscribePresence(uid,cb){
 }
 let presenceSub=null;
 
-// ── ЗАГРУЗКА ФОТО В SUPABASE STORAGE ──
+// ── ЗАГРУЗКА ФОТО: Supabase Storage → fallback base64 ──
 async function uploadPhoto(file){
+  // Сначала пробуем Supabase Storage
   try{
     const ext=(file.type||'image/jpeg').split('/')[1].replace('jpeg','jpg');
     const path=`${ME.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const {error}=await sb.storage.from('chat-photos').upload(path,file,{contentType:file.type||'image/jpeg',upsert:false});
-    if(error){console.warn('uploadPhoto error',error);return null;}
-    const {data}=sb.storage.from('chat-photos').getPublicUrl(path);
-    return data.publicUrl;
-  }catch(e){console.warn('uploadPhoto exception',e);return null;}
+    const {error}=await sb.storage.from('chat-photos').upload(path,file,{contentType:file.type,upsert:false});
+    if(!error){
+      return sb.storage.from('chat-photos').getPublicUrl(path).data.publicUrl;
+    }
+    console.warn('Storage upload failed, using base64 fallback:',error.message);
+  }catch(e){console.warn('Storage error:',e);}
+  // Fallback: конвертируем в base64 (работает без bucket)
+  return new Promise((resolve)=>{
+    // Сжимаем перед base64 чтобы не перегружать БД
+    const img=new Image();
+    const burl=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(burl);
+      const MAX=800;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){const r=Math.min(MAX/w,MAX/h);w=Math.round(w*r);h=Math.round(h*r);}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL('image/jpeg',0.75));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(burl);resolve(null);};
+    img.src=burl;
+  });
 }
 
 async function loadProfile(){
@@ -923,22 +931,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(Math.abs(newW-_lastW)>50){_lastW=newW;buildInputBar();}
   });
   loadProfile();
-  // ── ПЛАВАЮЩАЯ ДАТА ПРИ СКРОЛЛЕ ──
-  let _fdTimer=null;
-  function updateFloatDate(){
-    const fd=Q('floatdate');const msgs=Q('msgs');if(!fd||!msgs) return;
-    const chips=msgs.querySelectorAll('.dchip');
-    let label='Сегодня';
-    const mRect=msgs.getBoundingClientRect();
-    chips.forEach(chip=>{
-      if(chip.getBoundingClientRect().top < mRect.top+60) label=chip.textContent;
-    });
-    fd.textContent=label;fd.classList.add('show');
-    clearTimeout(_fdTimer);_fdTimer=setTimeout(()=>fd.classList.remove('show'),1500);
-  }
-  // вешаем на msgs при первом открытии чата
-  const _msgsEl=Q('msgs');
-  if(_msgsEl) _msgsEl.addEventListener('scroll',updateFloatDate,{passive:true});
   // build emoji grid
   const eg=Q('emj');
   if(eg){
@@ -1079,18 +1071,16 @@ const Z={
     el.appendChild(aw);
     const cb=document.createElement('div'); cb.className='cb';
     const r1=document.createElement('div'); r1.className='cr1';
+    const nmWrap=document.createElement('div');nmWrap.style.cssText='display:flex;align-items:center;gap:3px;min-width:0;flex:1;overflow:hidden';
     const nm=document.createElement('span'); nm.className='cn'; nm.textContent=c.name;
-    // Галочка — СНАРУЖИ .cn (иначе overflow:hidden её срежет)
-    if(c.lastTs){
-      const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);
-      const nw=document.createElement('div');nw.style.cssText='display:flex;align-items:center;gap:3px;min-width:0;flex:1;overflow:hidden';
-      nw.appendChild(nm);
-      if(c.verified){const vb=document.createElement('span');vb.style.cssText='flex-shrink:0;display:flex;align-items:center';vb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';nw.appendChild(vb);}
-      r1.append(nw,tm);
-    } else {
-      r1.appendChild(nm);
-      if(c.verified){const vb=document.createElement('span');vb.style.cssText='flex-shrink:0;display:flex;align-items:center';vb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';r1.appendChild(vb);}
+    nmWrap.appendChild(nm);
+    if(c.verified){
+      const vb=document.createElement('span');vb.className='vbdg';
+      vb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      nmWrap.appendChild(vb);
     }
+    if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nmWrap,tm);}
+    else r1.append(nmWrap);
     const r2=document.createElement('div'); r2.className='cr2';
     const mg=document.createElement('span'); mg.className='cm';
     if(c.fav) mg.textContent='Сохранённые заметки';
@@ -1123,15 +1113,22 @@ const Z={
     if(!c) c={id,name:'Пользователь',g:['#1e50ff','#6b8fff'],photo:null,ini:'?',online:false,fav:false};
     Q('nc').style.display='none'; Q('ch').style.display='flex'; Q('msgs').style.display='flex'; Q('msgs').style.flexDirection='column';
     Q('ia').style.display='flex'; Q('ia').style.flexDirection='column'; Q('pc').classList.add('open');
-    // layout via keyboard fix listener
+    if(window.visualViewport&&window.innerWidth<=700){const vv=window.visualViewport;Q('pc').style.height=vv.height+'px';Q('pc').style.top=vv.offsetTop+'px';}
     const chav=Q('chav'); chav.style.background=`linear-gradient(135deg,${c.g[0]},${c.g[1]})`; chav.innerHTML='';
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
     else{chav.textContent=c.ini;}
     // Шапка чата: имя + галочка
     Q('chn').innerHTML='';
-    const _ns=document.createElement('span');_ns.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0';_ns.textContent=c.name;Q('chn').appendChild(_ns);
-    if(c.verified){const _vb=document.createElement('span');_vb.style.cssText='flex-shrink:0;display:flex;align-items:center';_vb.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';Q('chn').appendChild(_vb);}
+    const _ns=document.createElement('span');
+    _ns.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1';
+    _ns.textContent=c.name;
+    Q('chn').appendChild(_ns);
+    if(c.verified){
+      const _vb=document.createElement('span');_vb.className='vbdg';
+      _vb.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      Q('chn').appendChild(_vb);
+    }
     const chs=Q('chs');
     if(!c.fav&&id!==ME.id){
       getPresence(id).then(p=>{
@@ -1162,12 +1159,7 @@ const Z={
       subscribeChatMessages(id);
       subscribeTyping(id);
     }
-    setTimeout(()=>{
-      const m=Q('msgs');if(m){
-        m.scrollTop=m.scrollHeight;
-        if(!m._fdBound){m._fdBound=true;m.addEventListener('scroll',updateFloatDate,{passive:true});}
-      }
-    },30);
+    setTimeout(()=>{const m=Q('msgs');if(m)m.scrollTop=m.scrollHeight;},30);
     Q('ta').focus();
   },
   bl(){
@@ -1344,7 +1336,7 @@ const Z={
   hk(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();Z.sm();}},
   ck(){
     const ta=Q('ta'),snd=Q('snd');
-    if(snd)snd.disabled=!(ta?.value.trim()||S.photos.length)||S.photos.some(p=>p.uploading);
+    if(snd)snd.disabled=!(ta?.value.trim()||S.photos.filter(p=>!p.uploading).length)||S.photos.some(p=>p.uploading);
     if(ta?.value.trim()) startTyping();
   },
   ar(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';},
@@ -1373,15 +1365,15 @@ const Z={
     e.target.value='';
     if(!files.length) return;
     files.forEach(f=>{
-      if(f.size>8*1024*1024){alert('Файл '+f.name+' > 8 МБ');return;}
+      if(f.size>10*1024*1024){alert('Файл '+f.name+' > 10 МБ');return;}
       const blobUrl=URL.createObjectURL(f);
-      S.photos.push({url:blobUrl,uploading:true,_file:f});
+      S.photos.push({url:blobUrl,uploading:true});
       Z.uph();Z.ck();
-      uploadPhoto(f).then(pubUrl=>{
+      uploadPhoto(f).then(url=>{
         const idx=S.photos.findIndex(p=>p.url===blobUrl);
         if(idx<0) return;
-        if(pubUrl){S.photos[idx]={url:pubUrl,uploading:false};}
-        else{S.photos.splice(idx,1);alert('Ошибка загрузки. Создай bucket chat-photos в Supabase Storage (Public).');}
+        if(url){S.photos[idx]={url,uploading:false};}
+        else{S.photos.splice(idx,1);}
         Z.uph();Z.ck();
       });
     });
@@ -1395,7 +1387,7 @@ const Z={
       const img=document.createElement('img');img.src=p.url;item.appendChild(img);
       if(p.uploading){
         const ov=document.createElement('div');
-        ov.style.cssText='position:absolute;inset:0;background:rgba(11,21,53,.5);display:flex;align-items:center;justify-content:center;border-radius:7px';
+        ov.style.cssText='position:absolute;inset:0;background:rgba(11,21,53,.45);display:flex;align-items:center;justify-content:center;border-radius:7px';
         ov.innerHTML='<div style="width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>';
         item.appendChild(ov);
       } else {
@@ -1607,14 +1599,13 @@ async function openUP(uid){
   av.style.background=`linear-gradient(135deg,${GRADS[gi][0]},${GRADS[gi][1]})`;
   if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
   else{av.innerHTML='';av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
-  // Имя + галочка в профиле
+  // up-name + галочка
   Q('up-name').innerHTML='';
-  const _un=document.createTextNode(prof.full_name||prof.username||'Пользователь');
-  Q('up-name').appendChild(_un);
+  Q('up-name').style.cssText='font-family:\'Syne\',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535;display:flex;align-items:center;justify-content:center;gap:4px';
+  Q('up-name').appendChild(document.createTextNode(prof.full_name||prof.username||'Пользователь'));
   if(prof.verified){
-    const _vb=document.createElement('span');
-    _vb.style.cssText='flex-shrink:0;display:flex;align-items:center';
-    _vb.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const _vb=document.createElement('span');_vb.className='vbdg';
+    _vb.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     Q('up-name').appendChild(_vb);
   }
   // username всегда один @
@@ -1629,79 +1620,17 @@ async function openUP(uid){
 }
 function closeUP(){Q('upov').style.display='none';}
 
-// ── KEYBOARD FIX: iOS + Android — только поле ввода двигается, диалог нет ──
-(function(){
-  if(!window.visualViewport) return;
-  const vv = window.visualViewport;
-  let lastKbH = 0;
-
-  function fix(){
-    const pc = Q('pc');
-    const ia = Q('ia');
-    const msgs = Q('msgs');
-    if(!pc || !ia || !msgs) return;
-
-    // Высота видимой области
-    const vh = vv.height;
-    const vt = vv.offsetTop;
-
-    // Высота клавиатуры = то что не видно снизу
-    const totalH = window.innerHeight;
-    const kbH = Math.max(0, totalH - (vt + vh));
-
-    if(kbH === lastKbH) return;
-    lastKbH = kbH;
-
-    if(window.innerWidth > 700){
-      // На ПК ничего не делаем
-      pc.style.height = '';
-      pc.style.top = '';
-      ia.style.transform = '';
-      msgs.style.paddingBottom = '';
-      return;
-    }
-
-    // На мобиле:
-    // #pc остаётся на месте (position:fixed top:0 height:100dvh)
-    // #ia поднимается на высоту клавиатуры через transform
-    // #msgs получает padding-bottom = высота ia + клавиатура
-    pc.style.height = vh + 'px';
-    pc.style.top = vt + 'px';
-
-    const iaH = ia.offsetHeight || 60;
-    msgs.style.paddingBottom = (iaH + 4) + 'px';
-
-    // Если были у самого низа — прокручиваем вниз
-    if(msgs.scrollTop + msgs.clientHeight + 60 >= msgs.scrollHeight){
-      requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
-    }
-  }
-
-  let raf = null;
-  function schedule(){
-    if(raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => { raf = null; fix(); });
-  }
-
-  vv.addEventListener('resize', schedule, {passive:true});
-  vv.addEventListener('scroll', schedule, {passive:true});
-
-  // iOS фокус — клавиатура анимируется ~300мс
-  document.addEventListener('focus', e => {
-    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'){
-      schedule();
-      setTimeout(schedule, 200);
-      setTimeout(schedule, 450);
-    }
-  }, true);
-
-  document.addEventListener('blur', e => {
-    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'){
-      setTimeout(schedule, 100);
-      setTimeout(schedule, 350);
-    }
-  }, true);
-})();
+// ── MOBILE KEYBOARD FIX ──
+if(window.visualViewport && window.innerWidth<=700){
+  const updateLayout=()=>{
+    const pc=Q('pc');if(!pc.classList.contains('open')) return;
+    const vv=window.visualViewport;
+    pc.style.height=vv.height+'px';
+    pc.style.top=vv.offsetTop+'px';
+  };
+  window.visualViewport.addEventListener('resize',updateLayout);
+  window.visualViewport.addEventListener('scroll',updateLayout);
+}
 </script>
 </body>
 </html>
