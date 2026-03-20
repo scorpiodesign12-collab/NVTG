@@ -759,14 +759,18 @@ async function sendMessage(text,photos,replyTo,replyName){
 
   try{
     console.log('Sending message:', {chatId, text, ME_id: ME.id});
-    const {data,error}=await sb.from('messages').insert({
+    // Строим объект только с нужными полями
+    const insertData={
       chat_id:chatId,
       sender_id:ME.id,
-      text:text||'',
-      photos:photos||[],
-      reply_to:replyTo||null,
-      reply_name:replyName||null
-    }).select().single();
+      text:text||''
+    };
+    // Добавляем опциональные поля только если есть
+    if(photos&&photos.length) insertData.photos=photos;
+    if(replyTo) insertData.reply_to=replyTo;
+    if(replyName) insertData.reply_name=replyName;
+
+    const {data,error}=await sb.from('messages').insert(insertData).select().single();
 
     if(error){
       console.warn('Send error',error);
