@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,interactive-widget=overlays-content">
 <title>NVTG — Чаты</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -89,7 +89,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .cbg{background:var(--blue);color:#fff;font-size:.64rem;font-weight:700;min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0}
 
 /* CHAT PANEL */
-#pc{flex:1;display:flex;flex-direction:column;height:100dvh;min-width:0;background:var(--bg);background-image:radial-gradient(var(--brd) 1px,transparent 1px);background-size:22px 22px}
+#pc{flex:1;display:flex;flex-direction:column;height:100dvh;min-width:0;background:var(--bg);background-image:radial-gradient(var(--brd) 1px,transparent 1px);background-size:22px 22px;position:relative}
 #nc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #nc p{font-size:.88rem;color:var(--muted);font-weight:500}
 
@@ -108,8 +108,8 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 @keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 .typing-text{font-size:.72rem;color:var(--muted);font-style:italic}
 
-/* Fix emoji in textarea - Manrope первым, emoji как fallback */
-.iw textarea{font-family:'Manrope','Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif!important;word-spacing:normal;letter-spacing:normal;}
+/* Fix emoji in textarea */
+.iw textarea{font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji','Manrope',sans-serif!important;}
 .chin{flex:1;min-width:0}
 .chn{font-size:.93rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chs{font-size:.72rem;color:var(--muted)}
@@ -137,6 +137,9 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 #msgs::-webkit-scrollbar{width:4px}
 #msgs::-webkit-scrollbar-thumb{background:rgba(11,21,53,.1);border-radius:4px}
 .dchip{align-self:center;background:rgba(255,255,255,.85);border-radius:12px;padding:3px 12px;font-size:.7rem;color:var(--muted);margin:4px 0;flex-shrink:0;box-shadow:0 1px 3px rgba(11,21,53,.06)}
+/* Плавающая дата при скролле */
+#floatdate{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);border-radius:12px;padding:3px 14px;font-size:.72rem;color:var(--muted);font-weight:600;box-shadow:0 2px 8px rgba(11,21,53,.12);pointer-events:none;z-index:10;opacity:0;transition:opacity .2s;backdrop-filter:blur(4px);white-space:nowrap}
+#floatdate.show{opacity:1}
 .es{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 20px}
 .es .ee{font-size:3.5rem;line-height:1}
 .es p{font-size:.88rem;color:var(--muted);text-align:center;max-width:200px;line-height:1.5}
@@ -148,13 +151,13 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .sri svg{width:13px;height:13px;color:#fff}
 
 /* BUBBLE */
-.mb{max-width:70%;border-radius:18px;font-size:.88rem;line-height:1.45;color:var(--navy);box-shadow:0 1px 3px rgba(11,21,53,.08);word-break:break-word;position:relative;overflow:hidden}
+.mb{max-width:78%;border-radius:18px;font-size:.88rem;line-height:1.45;color:var(--navy);box-shadow:0 1px 3px rgba(11,21,53,.08);word-break:break-word;position:relative;overflow:hidden}
 .mr.out .mb{background:var(--sent);border-bottom-right-radius:4px}
 .mr.in .mb{background:var(--wh);border-bottom-left-radius:4px}
 .mr.pinned .mb{outline:2px solid var(--blue);outline-offset:1px}
 .mtext{padding:7px 11px 0;display:block;white-space:pre-wrap;word-break:break-word}
 a.ml{color:var(--blue);text-decoration:underline;word-break:break-all}
-.redbadge{font-size:.65rem;color:var(--muted);margin-left:2px;font-style:italic}
+.redbadge{font-size:.62rem;color:var(--muted);margin-left:3px;font-style:italic;opacity:.8}
 
 /* TIME PILL - Telegram style */
 .mmeta{
@@ -311,20 +314,20 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     height:100dvh;
   }
   #pc.open{transform:translateX(0)}
-  #ia{flex-shrink:0;position:relative;z-index:5;background:var(--wh)}
-  #msgs{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+  #ia{flex-shrink:0;position:relative;z-index:5}
+  #msgs{flex:1;overflow-y:auto;min-height:0}
   .back{display:flex}
   #nc{display:none}
   #ch{height:62px;flex-shrink:0}
   .chav{width:42px;height:42px}
   .chn{font-size:1.05rem}
   .chs{font-size:.8rem}
-  .mb{font-size:1rem;max-width:82%}
+  .mb{font-size:1rem;max-width:88%}
   .mtext{padding:9px 13px 0;font-size:1rem}
   .mmeta{font-size:.7rem;padding:2px 10px 7px}
   .mmeta .mt{font-size:.7rem}
   .tks svg{width:15px;height:15px}
-  .ir{padding:10px 10px;padding-bottom:max(12px,env(safe-area-inset-bottom,12px))}
+  .ir{padding:12px 10px;padding-bottom:max(14px,env(safe-area-inset-bottom,14px))}
   .iw{min-height:50px;padding:10px 12px}
   .iw textarea{font-size:1.05rem}
   .snd{width:50px;height:50px}
@@ -412,6 +415,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     </div>
 
     <div id="msgs"></div>
+    <div id="floatdate"></div>
 
     <div id="ia">
       <div id="strip">
@@ -909,8 +913,35 @@ window.addEventListener('DOMContentLoaded',()=>{
       eg.appendChild(d);
     });
   }
-  // Add wave emoji to empty state click
-  Z.rl();
+  // ── ПЛАВАЮЩАЯ ДАТА ПРИ СКРОЛЛЕ ──
+  let _fdTimer=null;
+  const _fd=Q('floatdate');
+  function updateFloatDate(){
+    if(!_fd) return;
+    const msgsEl=Q('msgs');if(!msgsEl) return;
+    // Находим ближайший dchip к верху
+    const chips=msgsEl.querySelectorAll('.dchip');
+    let label='Сегодня';
+    chips.forEach(chip=>{
+      const rect=chip.getBoundingClientRect();
+      const mRect=msgsEl.getBoundingClientRect();
+      if(rect.top<mRect.top+40) label=chip.textContent;
+    });
+    _fd.textContent=label;
+    _fd.classList.add('show');
+    clearTimeout(_fdTimer);
+    _fdTimer=setTimeout(()=>_fd.classList.remove('show'),1500);
+  }
+  document.addEventListener('scroll',updateFloatDate,{passive:true,capture:true});
+  // Также вешаем на msgs когда он появится (msgs создаётся динамически)
+  const _msgsObs=new MutationObserver(()=>{
+    const msgsEl=Q('msgs');
+    if(msgsEl&&!msgsEl._fdBound){
+      msgsEl._fdBound=true;
+      msgsEl.addEventListener('scroll',updateFloatDate,{passive:true});
+    }
+  });
+  _msgsObs.observe(document.body,{childList:true,subtree:true});
   document.addEventListener('click',e=>{
     if(!Q('ctx').contains(e.target)) Z.hctx();
     if(!Q('hm').contains(e.target)&&!Q('hdots')?.contains(e.target)) Z.hhm();
@@ -1079,7 +1110,7 @@ const Z={
     if(!c) c={id,name:'Пользователь',g:['#1e50ff','#6b8fff'],photo:null,ini:'?',online:false,fav:false};
     Q('nc').style.display='none'; Q('ch').style.display='flex'; Q('msgs').style.display='flex'; Q('msgs').style.flexDirection='column';
     Q('ia').style.display='flex'; Q('ia').style.flexDirection='column'; Q('pc').classList.add('open');
-    if(window.visualViewport&&window.innerWidth<=700){const vv=window.visualViewport;Q('pc').style.height=vv.height+'px';Q('pc').style.top=vv.offsetTop+'px';}
+    // высота задаётся через visualViewport listener
     const chav=Q('chav'); chav.style.background=`linear-gradient(135deg,${c.g[0]},${c.g[1]})`; chav.innerHTML='';
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
@@ -1115,7 +1146,12 @@ const Z={
       subscribeChatMessages(id);
       subscribeTyping(id);
     }
-    setTimeout(()=>{const m=Q('msgs');if(m)m.scrollTop=m.scrollHeight;},30);
+    setTimeout(()=>{
+      const m=Q('msgs');if(m){
+        m.scrollTop=m.scrollHeight;
+        if(!m._fdBound){m._fdBound=true;m.addEventListener('scroll',updateFloatDate,{passive:true});}
+      }
+    },30);
     Q('ta').focus();
   },
   bl(){
@@ -1553,57 +1589,49 @@ async function openUP(uid){
 }
 function closeUP(){Q('upov').style.display='none';}
 
-// ── MOBILE KEYBOARD FIX (iOS Safari portrait + Android) ──
+// ── MOBILE KEYBOARD FIX (iOS Safari) ──
+// interactive-widget=overlays-content (в viewport meta) — клавиатура накладывается поверх,
+// не ресайзит страницу. visualViewport даёт точные размеры видимой области.
 (function(){
   if(!window.visualViewport) return;
   const vv=window.visualViewport;
+  let raf=null;
 
-  function applyLayout(){
-    const pc=Q('pc');
-    if(!pc) return;
-    const h=Math.round(vv.height);
-    const t=Math.round(vv.offsetTop);
-    if(pc.classList.contains('open')){
-      pc.style.height=h+'px';
-      pc.style.top=t+'px';
-      pc.style.bottom='auto';
-    } else {
-      pc.style.height='';
-      pc.style.top='';
-      pc.style.bottom='';
+  function apply(){
+    raf=null;
+    const pc=Q('pc');if(!pc) return;
+    if(!pc.classList.contains('open')) return;
+    const h=vv.height;
+    const t=vv.offsetTop;
+    pc.style.height=Math.round(h)+'px';
+    pc.style.top=Math.round(t)+'px';
+    pc.style.bottom='auto';
+    // Скроллим вниз чтобы последнее сообщение было видно
+    const msgs=Q('msgs');
+    if(msgs&&msgs.scrollTop+msgs.clientHeight+80>=msgs.scrollHeight){
+      msgs.scrollTop=msgs.scrollHeight;
     }
   }
 
-  let rafId=null;
-  function scheduleLayout(){
-    if(rafId) cancelAnimationFrame(rafId);
-    rafId=requestAnimationFrame(()=>{rafId=null;applyLayout();});
+  function schedule(){
+    if(!raf) raf=requestAnimationFrame(apply);
   }
 
-  vv.addEventListener('resize',scheduleLayout,{passive:true});
-  vv.addEventListener('scroll',scheduleLayout,{passive:true});
+  vv.addEventListener('resize',schedule,{passive:true});
+  vv.addEventListener('scroll',schedule,{passive:true});
 
-  // iOS: фокус на поле ввода — клавиатура появляется с задержкой
-  document.addEventListener('focus',function(e){
-    if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
-      scheduleLayout();
-      setTimeout(scheduleLayout,150);
-      setTimeout(scheduleLayout,400);
-      setTimeout(scheduleLayout,700);
+  // iOS открывает клавиатуру медленно — несколько попыток
+  document.addEventListener('focus',e=>{
+    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'){
+      schedule();
+      setTimeout(schedule,200);
+      setTimeout(schedule,500);
     }
   },true);
 
-  // Клавиатура скрылась
-  document.addEventListener('blur',function(e){
-    if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')){
-      setTimeout(()=>{
-        const pc=Q('pc');
-        if(pc&&pc.classList.contains('open')){
-          pc.style.height=vv.height+'px';
-          pc.style.top=vv.offsetTop+'px';
-          pc.style.bottom='auto';
-        }
-      },200);
+  document.addEventListener('blur',e=>{
+    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'){
+      setTimeout(schedule,300);
     }
   },true);
 })();
