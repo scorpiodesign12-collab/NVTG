@@ -590,10 +590,18 @@ async function loadChats(){
   if(!ME.id) return;
   CHATS=CHATS.filter(c=>c.fav);
   console.log('loadChats: ME.id=', ME.id);
-  const {data:msgs, error}=await sb.from('messages')
+
+  // Загружаем скрытые чаты
+  let hiddenChatIds=new Set();
+  try{
+    const {data:hidden}=await sb.from('hidden_chats').select('chat_id').eq('user_id',ME.id);
+    (hidden||[]).forEach(h=>hiddenChatIds.add(h.chat_id));
+  }catch(e){} // таблица может не существовать
+
+  const {data:msgs,error}=await sb.from('messages')
     .select('chat_id,sender_id,created_at,text,photos')
     .order('created_at',{ascending:false});
-  console.log('loadChats messages:', {msgs, error});
+  console.log('loadChats messages:', {msgs,error});
   if(error){console.error('loadChats error:',error);Z.rl();return;}
   if(!msgs||!msgs.length){Z.rl();return;}
 
@@ -603,7 +611,10 @@ async function loadChats(){
   msgs.forEach(m=>{
     const parts=m.chat_id.split('_');
     const other=parts.find(p=>p!==ME.id);
-    if(other&&!seen.has(other)){seen.add(other);partnerIds.push({uid:other,chatId:m.chat_id});}
+    // Пропускаем скрытые чаты
+    if(other&&!seen.has(other)&&!hiddenChatIds.has(m.chat_id)){
+      seen.add(other);partnerIds.push({uid:other,chatId:m.chat_id});
+    }
   });
 
   if(!partnerIds.length){Z.rl();return;}
@@ -760,12 +771,12 @@ async function sendMessage(text,photos,replyTo,replyName){
   try{
     console.log('Sending message:', {chatId, text, ME_id: ME.id});
     // Строим объект только с нужными полями
+    const safeText=(text||'').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\x00-\uFFFF]/g,c=>c); // оставляем все символы включая эмодзи
     const insertData={
       chat_id:chatId,
       sender_id:ME.id,
-      text:text||''
+      text:safeText
     };
-    // Добавляем опциональные поля только если есть
     if(photos&&photos.length) insertData.photos=photos;
     if(replyTo) insertData.reply_to=replyTo;
     if(replyName) insertData.reply_name=replyName;
@@ -1070,21 +1081,23 @@ const Z={
   bmr(m){
     const c=gc(S.cur);
     const row=document.createElement('div');
-    row.className='mr '+(m.out?'out':'in')+(S.pin[S.cur]===m.id?' pinned':'');
+    const isPinned=S.cur&&S.pin[S.cur]&&S.pin[S.cur]===m.id;
+    row.className='mr '+(m.out?'out':'in')+(isPinned?' pinned':'');
     row.dataset.id=m.id;
     const sri=document.createElement('div'); sri.className='sri';
     sri.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 17l-5-5 5-5M20 18v-2a4 4 0 0 0-4-4H4"/></svg>';
     row.appendChild(sri);
 
-    if(m.photos?.length){
-      const n=Math.min(m.photos.length,5);
+    if(m.photos&&m.photos.filter(p=>p&&!p.startsWith('blob:')).length>0){
+      const validPhotos=m.photos.filter(p=>p&&!p.startsWith('blob:'));
+      const n=Math.min(validPhotos.length,5);
       const grid=document.createElement('div'); grid.className=`pg n${n}`;
-      m.photos.slice(0,5).forEach((src,pi)=>{
+      validPhotos.slice(0,5).forEach((src,pi)=>{
         const item=document.createElement('div'); item.className='pi';
         const img=document.createElement('img'); img.src=src; img.alt='';
-        img.onclick=e=>{e.stopPropagation();Z.lb(m.photos,pi);};
+        img.onclick=e=>{e.stopPropagation();Z.lb(validPhotos,pi);};
         item.appendChild(img);
-        if(pi===4&&m.photos.length>5){const ov=document.createElement('div');ov.className='pi-more';ov.textContent=`+${m.photos.length-4}`;item.appendChild(ov);}
+        if(pi===4&&validPhotos.length>5){const ov=document.createElement('div');ov.className='pi-more';ov.textContent=`+${validPhotos.length-4}`;item.appendChild(ov);}
         grid.appendChild(item);
       });
       if(m.text){const cap=document.createElement('div');cap.className='pg-cap';cap.textContent=m.text;grid.appendChild(cap);}
@@ -1097,7 +1110,7 @@ const Z={
       if(m.replyTo){
         const orig=currentMsgs.find(x=>x.id===m.replyTo);
         const sn=m.replyName||(orig?(orig.out?ME.name:(c?c.name:'?')):'Удалено');
-        const replyText=orig?(orig.photos?.length?(orig.photos.length>1?'Фотографии':'Фотография'):orig.text):'Удалено';
+        const replyText=orig?(orig.photos?.length?'Фотография':orig.text):'Удалено';
         const rpEl=document.createElement('div');rpEl.className='rp';rpEl.style.cursor='pointer';
         rpEl.innerHTML=`<div class="rn">${sn}</div><div class="rt">${replyText}</div>`;
         rpEl.onclick=e=>{
@@ -1108,7 +1121,7 @@ const Z={
         mb.appendChild(rpEl);
       }
       const tx=document.createElement('span'); tx.className='mtext';
-      Z.rl2(tx,m.text); mb.appendChild(tx);
+      Z.rl2(tx,m.text||''); mb.appendChild(tx);
       if(m.edited){const rb=document.createElement('span');rb.className='redbadge';rb.textContent='ред.';tx.appendChild(rb);}
       const mm=document.createElement('div'); mm.className='mmeta';
       const mt2=document.createElement('span'); mt2.className='mt'; mt2.textContent=ft(m.ts);
@@ -1356,23 +1369,53 @@ const Z={
     setTimeout(async()=>{
       const idx=currentMsgs.findIndex(x=>x.id===S.cmid);
       if(idx>=0){
-        if(m?.dbId&&delForAll) await sb.from('messages').update({deleted_for_all:true}).eq('id',m.dbId);
+        if(m?.dbId){
+          if(delForAll){
+            // Удалить у всех — обновляем флаг в БД
+            await sb.from('messages').update({deleted_for_all:true}).eq('id',m.dbId);
+          } else {
+            // Удалить только у себя — реально удаляем строку только если мы отправитель
+            if(m.out) await sb.from('messages').delete().eq('id',m.dbId);
+          }
+        }
         currentMsgs.splice(idx,1);
       }
-      if(S.pin[S.cur]===S.cmid){delete S.pin[S.cur];Z.upb();}
-      sv();Z.rm();Z.rl();
+      if(S.cur&&S.pin[S.cur]===S.cmid){delete S.pin[S.cur];sv();Z.upb();}
+      Z.rm();Z.rl();
     },290);
   },
-  cpm(){closeD();if(!S.cmid||!S.cur) return;S.pin[S.cur]=S.cmid;sv();Z.upb();Z.rm();},
-  cdcm(){
+  async cpm(){
+    closeD();if(!S.cmid||!S.cur||S.cur==='fav') return;
+    const chatId=makeChatId(ME.id,S.cur);
+    S.pin[S.cur]=S.cmid;sv();
+    // Сохраняем закреп в Supabase для всех
+    try{
+      await sb.from('pinned_messages').upsert({chat_id:chatId,message_id:S.cmid,pinned_by:ME.id},{onConflict:'chat_id'});
+    }catch(e){console.warn('pin error',e);}
+    Z.upb();Z.rm();
+  },
+  async cdcm(){
     closeD();if(!S.dchid) return;
+    const isHidingFav=S.dchid==='fav';
+    if(isHidingFav){
+      // Избранное нельзя удалить — только очистить
+      LS.setJ('nv4_fav',[]);
+      currentMsgs=[];
+      if(S.cur==='fav') Z.rm();
+      return;
+    }
     const chatId=makeChatId(ME.id,S.dchid);
     const delForAll=Q('dca')?.checked;
     if(delForAll){
-      // Удалить для обоих — помечаем все сообщения как удалённые
-      sb.from('messages').update({deleted_for_all:true}).eq('chat_id',chatId).then(()=>{});
+      // Удалить для обоих — удаляем все сообщения из БД
+      try{await sb.from('messages').delete().eq('chat_id',chatId);}catch(e){console.warn('delete chat error',e);}
+    } else {
+      // Скрыть только у себя — сохраняем в hidden_chats
+      try{await sb.from('hidden_chats').upsert({user_id:ME.id,chat_id:chatId},{onConflict:'user_id,chat_id'});}catch(e){
+        // Если таблицы нет — просто скрываем локально
+        console.warn('hidden_chats error',e);
+      }
     }
-    // Удаляем чат из своего списка в любом случае
     CHATS=CHATS.filter(c=>c.id!==S.dchid);
     delete S.pin[S.dchid];sv();Z.bl();Z.rl();
   }
