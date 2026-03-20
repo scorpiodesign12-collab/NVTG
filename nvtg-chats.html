@@ -14,7 +14,24 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 /* APP */
 #app{display:flex;height:100dvh;overflow:hidden}
 
-/* DRAWER OVERLAY */
+/* SIDEBAR (same style as profile/settings) */
+.sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sbmark{width:34px;height:34px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark svg{width:18px;height:18px}
+.sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
+.sbnm span{color:#6b8fff}
+.si{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;transition:background .15s}
+.si:hover{background:rgba(255,255,255,.07)}
+.si.act{background:rgba(30,80,255,.25)}
+.sic{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sic svg{width:18px;height:18px;color:rgba(255,255,255,.6)}
+.si.act .sic{background:var(--blue)}
+.si.act .sic svg,.si.act span{color:#fff}
+.si span{font-size:.92rem;font-weight:600;color:rgba(255,255,255,.7)}
+.si.red .sic svg,.si.red span{color:#ff5c5c!important}
+.sbsep{height:1px;background:rgba(255,255,255,.07);margin:4px 0}
+
+/* DRAWER */
 #dov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
 #dov.on{display:block;opacity:1;pointer-events:auto}
 #drw{position:fixed;top:0;left:0;bottom:0;width:270px;z-index:201;background:var(--navy);transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:6px 0 30px rgba(0,0,0,.2)}
@@ -320,22 +337,17 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 <!-- DRAWER -->
 <div id="dov" onclick="D.cd()"></div>
 <div id="drw">
-  <div class="dh" onclick="D.cd()">
-    <div class="dav" id="dav-el"><img id="dav-img" src="" alt="" style="display:none"><span id="dav-ini">НВ</span></div>
-    <div><div class="dnm" id="d-nm">Пользователь</div><div class="dus" id="d-us">@user</div></div>
+  <div class="sbh">
+    <div class="sbmark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="18" r="3.5" fill="#1e50ff"/></svg></div>
+    <div class="sbnm">NV<span>TG</span></div>
   </div>
   <nav class="dnav">
-    <div class="di act">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Чаты</span></div>
-    <div class="di" onclick="location.href='nvtg-profile.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Мой профиль</span></div>
-    <div class="di" onclick="Z.oc('fav');D.cd()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>Избранное</span></div>
-    <div class="di" onclick="location.href='nvtg-settings.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg><span>Настройки</span></div>
-    <div class="dsep"></div>
-    <div class="di red" onclick="location.href='nvtg-index.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Выйти</span></div>
+    <div class="si act"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><span>Чаты</span></div>
+    <div class="si" onclick="location.href='nvtg-profile.html'"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span>Мой профиль</span></div>
+    <div class="si" onclick="Z.oc('fav');D.cd()"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div><span>Избранное</span></div>
+    <div class="si" onclick="location.href='nvtg-settings.html'"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div><span>Настройки</span></div>
+    <div class="sbsep"></div>
+    <div class="si red" onclick="doLogout()"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><span>Выйти</span></div>
   </nav>
 </div>
 
@@ -497,12 +509,17 @@ function startPresence(){
 }
 function presenceText(p){
   if(!p) return 'не в сети';
-  if(p.is_online) return 'в сети';
+  if(p.is_online){
+    // Проверяем last_seen - если давно не обновлялся, считаем оффлайн
+    const diff=Math.floor((Date.now()-new Date(p.last_seen))/1000);
+    if(diff>90) return `был(а) ${Math.floor(diff/60)} мин назад`;
+    return 'в сети';
+  }
   const diff=Math.floor((Date.now()-new Date(p.last_seen))/1000);
   if(diff<60) return 'был(а) только что';
-  if(diff<3600) return `был(а) ${Math.floor(diff/60)} мин назад`;
-  if(diff<86400) return `был(а) ${Math.floor(diff/3600)} ч назад`;
-  return `был(а) ${Math.floor(diff/86400)} д назад`;
+  if(diff<3600){const m=Math.floor(diff/60);return `был(а) ${m} ${m===1?'мин':m<5?'мин':'мин'} назад`;}
+  if(diff<86400){const h=Math.floor(diff/3600);return `был(а) ${h} ${h===1?'час':h<5?'часа':'часов'} назад`;}
+  const d=Math.floor(diff/86400);return `был(а) ${d} ${d===1?'день':d<5?'дня':'дней'} назад`;
 }
 async function getPresence(uid){
   const {data}=await sb.from('presence').select('*').eq('user_id',uid).single();
@@ -523,20 +540,22 @@ async function loadProfile(){
     const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).single();
     if(p){
       ME.name=p.full_name||'Пользователь';
-      ME.username=p.username||'@user';
+      // Сохраняем username БЕЗ @, добавляем @ при показе
+      ME.username=p.username||'';
       ME.avatar=p.avatar_url||null;
       localStorage.setItem('nvtg_name',ME.name);
       localStorage.setItem('nvtg_user',ME.username);
       if(ME.avatar) localStorage.setItem('nvtg_av',ME.avatar);
-      Q('d-nm').textContent=ME.name; Q('d-us').textContent=ME.username;
-      const ini=ME.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'НВ';
-      Q('dav-ini').textContent=ini;
-      if(ME.avatar){Q('dav-img').src=ME.avatar;Q('dav-img').style.display='block';Q('dav-ini').style.display='none';}
     }
     startPresence();
     loadChats();
     subscribeNewMessages();
   }catch(e){console.warn('Profile load error',e);}
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  location.href='nvtg-index.html';
 }
 
 // ── CHATS (dynamic, loaded from Supabase) ──
@@ -799,10 +818,11 @@ const Z={
     }
   },
   mf(c,f){return !f||(c.username||'').toLowerCase().includes(f.toLowerCase().replace('@',''));},
-  // ПОИСК — только по username; недавние показываем только в поиске
+  // ПОИСК — по username с подсветкой совпадений
   fl(v){
     const s=Q('lscroll');s.innerHTML='';
     if(!v.trim()){
+      // Показываем недавних при открытии поиска
       const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
       if(recent.length){
         const l=document.createElement('div');l.className='llbl';l.textContent='Недавние';s.appendChild(l);
@@ -817,7 +837,7 @@ const Z={
       }
       return;
     }
-    const q=v.trim().replace('@','');
+    const q=v.trim().replace(/^@/,'');
     sb.from('profiles').select('id,full_name,username,avatar_url')
       .ilike('username',`%${q}%`).neq('id',ME.id).limit(20)
       .then(({data})=>{
@@ -827,15 +847,23 @@ const Z={
         const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
         data.forEach((prof,i)=>{
           const gi=(prof.id||'a').charCodeAt(0)%GRADS.length;
-          const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:prof.username?('@'+prof.username):'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||''};
+          const uname=prof.username||'';
+          // Подсветка совпадения в username
+          let subHtml='';
+          if(uname){
+            const idx=uname.toLowerCase().indexOf(q.toLowerCase());
+            if(idx>=0) subHtml='@'+uname.slice(0,idx)+'<mark style="background:#d4e7ff;color:#1e50ff;border-radius:3px;padding:0 1px">'+uname.slice(idx,idx+q.length)+'</mark>'+uname.slice(idx+q.length);
+            else subHtml='@'+uname;
+          }
+          const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:'@'+uname,subHtml,photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname};
           const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
-          if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:prof.username||''});if(recent.length>15)recent.pop();localStorage.setItem('nvtg_recent',JSON.stringify(recent));}
-          s.appendChild(Z.bci(c,i));
+          if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:uname});if(recent.length>15)recent.pop();localStorage.setItem('nvtg_recent',JSON.stringify(recent));}
+          s.appendChild(Z.bci(c,i,subHtml));
         });
       });
   },
   tls(){const b=Q('lsbar');b.classList.toggle('on');if(b.classList.contains('on')){Q('lsinp').focus();Z.fl('');}else{Q('lsinp').value='';Z.rl();}},
-  bci(c,i){
+  bci(c,i,subHtml=''){
     const unread=c.fav?0:(unreadCounts[c.id]||0);
     const el=document.createElement('div'); el.className='ci'+(S.cur===c.id?' act':''); el.style.animationDelay=(i*.04)+'s'; el.onclick=()=>Z.oc(c.id);
     const aw=document.createElement('div'); aw.className='aw';
@@ -849,14 +877,14 @@ const Z={
     const cb=document.createElement('div'); cb.className='cb';
     const r1=document.createElement('div'); r1.className='cr1';
     const nm=document.createElement('span'); nm.className='cn'; nm.textContent=c.name;
-    // Время последнего сообщения
     if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nm,tm);}
     else r1.append(nm);
     const r2=document.createElement('div'); r2.className='cr2';
     const mg=document.createElement('span'); mg.className='cm';
     if(c.fav) mg.textContent='Сохранённые заметки';
+    else if(subHtml){mg.innerHTML=subHtml;}
     else if(c.lastText) mg.textContent=c.lastText;
-    else mg.textContent=c.username?('@'+c.username):'';
+    else if(c.sub) mg.textContent=c.sub;
     r2.appendChild(mg);
     if(unread>0){const b=document.createElement('span');b.className='cbg';b.textContent=unread;r2.appendChild(b);}
     cb.append(r1,r2); el.appendChild(cb);
@@ -866,10 +894,21 @@ const Z={
   // OPEN CHAT
   async oc(id){
     S.cur=id;
-    // Clear unread
     unreadCounts[id]=0;
-    Z.rl(Q('lsinp').value);
-    const c=gc(id)||{id,name:'Пользователь',g:['#1e50ff','#6b8fff'],photo:null,ini:'?',online:false,fav:false};
+    Z.rl();
+    // Ищем в CHATS, если нет — загружаем профиль из Supabase
+    let c=gc(id);
+    if(!c&&id!=='fav'){
+      const {data:prof}=await sb.from('profiles').select('*').eq('id',id).single();
+      if(prof){
+        const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
+        const gi=(prof.id||'a').charCodeAt(0)%GRADS.length;
+        c={id:prof.id,name:prof.full_name||prof.username||'Пользователь',sub:prof.username?('@'+prof.username):'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||''};
+        // Добавляем в CHATS чтобы не потерять
+        if(!CHATS.find(x=>x.id===id)) CHATS.push({...c,lastText:'',lastTs:0});
+      }
+    }
+    if(!c) c={id,name:'Пользователь',g:['#1e50ff','#6b8fff'],photo:null,ini:'?',online:false,fav:false};
     Q('nc').style.display='none'; Q('ch').style.display='flex'; Q('msgs').style.display='flex'; Q('msgs').style.flexDirection='column';
     Q('ia').style.display='flex'; Q('ia').style.flexDirection='column'; Q('pc').classList.add('open');
     if(window.visualViewport&&window.innerWidth<=700){const vv=window.visualViewport;Q('pc').style.height=vv.height+'px';Q('pc').style.top=vv.offsetTop+'px';}
@@ -879,31 +918,17 @@ const Z={
     else{chav.textContent=c.ini;}
     Q('chn').textContent=c.name;
     const chs=Q('chs');
-    // Show presence
     if(!c.fav&&id!==ME.id){
-      getPresence(id).then(p=>{
-        const txt=presenceText(p);
-        chs.textContent=txt;
-        chs.className='chs'+(p?.is_online?' on':'');
-      });
-      // Subscribe presence updates
+      getPresence(id).then(p=>{chs.textContent=presenceText(p);chs.className='chs'+(p?.is_online?' on':'');});
       if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
-      presenceSub=subscribePresence(id,p=>{
-        if(S.cur!==id) return;
-        const txt=presenceText(p);
-        chs.textContent=txt;
-        chs.className='chs'+(p?.is_online?' on':'');
-      });
+      presenceSub=subscribePresence(id,p=>{if(S.cur!==id)return;chs.textContent=presenceText(p);chs.className='chs'+(p?.is_online?' on':'');});
     } else {
-      chs.textContent=c.fav?'Личные заметки':'';
-      chs.className='chs';
+      chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
     }
     Z.upb(); S.photos=[]; Z.uph(); Z.cs();
     currentMsgs=[];
-    // Load messages from Supabase (or localStorage for fav)
     if(c.fav){
-      currentMsgs=JSON.parse(localStorage.getItem('nv4_fav')||'[]');
-      Z.rm();
+      currentMsgs=JSON.parse(localStorage.getItem('nv4_fav')||'[]');Z.rm();
     } else {
       Q('msgs').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.82rem">Загрузка...</div>';
       await loadMessages(id);
@@ -1283,8 +1308,9 @@ async function openUP(uid){
   if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
   else{av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
   Q('up-name').textContent=prof.full_name||prof.username||'Пользователь';
-  // Один @ перед username
-  Q('up-user').textContent=prof.username?('@'+prof.username):'';
+  // Один @ перед username (username хранится БЕЗ @)
+  const uname=prof.username||'';
+  Q('up-user').textContent=uname?('@'+uname):'';
   // Bio
   const bioEl=Q('up-bio');
   if(bioEl){bioEl.textContent=prof.bio||'';bioEl.style.display=prof.bio?'block':'none';}
