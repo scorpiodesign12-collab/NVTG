@@ -226,17 +226,16 @@ async function doReg(){
   btn.disabled=true;document.getElementById('rb-l').textContent='';document.getElementById('rb-s').style.display='block';
   document.getElementById('err2').textContent='';
   const name=document.getElementById('rn').value.trim();
-  const rawu=document.getElementById('ru').value.replace('@','').toLowerCase();
+  const rawu=document.getElementById('ru').value.replace(/^@/,'').toLowerCase().trim();
   const email=rawu+'@nvtg.app';
   const pass=document.getElementById('rp1').value;
   try {
-    // check username unique
-    const {data:exist}=await sb.from('profiles').select('id').eq('username','@'+rawu).maybeSingle();
+    // Проверяем уникальность username (без @)
+    const {data:exist}=await sb.from('profiles').select('id').eq('username',rawu).maybeSingle();
     if(exist){document.getElementById('err2').textContent='Этот юзернейм уже занят';btn.disabled=false;document.getElementById('rb-s').style.display='none';document.getElementById('rb-l').textContent='Создать аккаунт';shake();return;}
     const {data,error}=await sb.auth.signUp({email,password:pass});
     if(error) throw error;
     const uid=data.user.id;
-    // upload avatar if any
     let avatarUrl='';
     if(cropBlob){
       const path=`${uid}/avatar.jpg`;
@@ -244,7 +243,8 @@ async function doReg(){
       const {data:pu}=sb.storage.from('avatars').getPublicUrl(path);
       avatarUrl=pu.publicUrl+'?t='+Date.now();
     }
-    const {error:pe}=await sb.from('profiles').insert({id:uid,username:'@'+rawu,full_name:name,avatar_url:avatarUrl,email:email});
+    // Сохраняем username БЕЗ @ 
+    const {error:pe}=await sb.from('profiles').insert({id:uid,username:rawu,full_name:name,avatar_url:avatarUrl,email:email});
     if(pe) throw pe;
     location.href='nvtg-chats.html';
   } catch(e){
@@ -262,26 +262,19 @@ async function doLog(){
   const p=document.getElementById('lp').value;
   if(!u||!p){document.getElementById('errl').textContent='Заполните все поля';btn.disabled=false;document.getElementById('lb-s').style.display='none';document.getElementById('lb-l').textContent='Войти';shake();return;}
   try {
-    // if username, find email
     let email=u;
+    // Если введён username (с @ или без) — ищем email в profiles
     if(!u.includes('@')||u.startsWith('@')){
-      const uname=u.startsWith('@')?u:'@'+u;
-      const {data:prof}=await sb.from('profiles').select('id').eq('username',uname).maybeSingle();
-      if(!prof){
-        // try as email anyway
-        email=u;
-      } else {
-        const {data:authU}=await sb.auth.admin?.getUserById?.(prof.id)||{data:null};
-        // fallback: store email on profile
-        const {data:p2}=await sb.from('profiles').select('email').eq('username',uname).maybeSingle();
-        if(p2?.email) email=p2.email; else email=u;
-      }
+      const uname=u.replace(/^@/,'').toLowerCase();
+      const {data:prof}=await sb.from('profiles').select('email').eq('username',uname).maybeSingle();
+      if(prof?.email) email=prof.email;
+      else email=uname+'@nvtg.app'; // fallback
     }
     const {error}=await sb.auth.signInWithPassword({email,password:p});
     if(error) throw error;
     location.href='nvtg-chats.html';
   } catch(e){
-    document.getElementById('errl').textContent='Неверный email или пароль';
+    document.getElementById('errl').textContent='Неверный юзернейм или пароль';
     btn.disabled=false;document.getElementById('lb-s').style.display='none';document.getElementById('lb-l').textContent='Войти';
     shake();
   }

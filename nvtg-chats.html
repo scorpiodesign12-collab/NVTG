@@ -637,7 +637,7 @@ async function loadChats(){
 
   // Загружаем профили партнёров
   const ids=partnerIds.map(p=>p.uid);
-  const {data:profiles}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',ids);
+  const {data:profiles}=await sb.from('profiles').select('id,full_name,username,avatar_url,verified').in('id',ids);
   const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd'],['#e74c3c','#ff7675'],['#2980b9','#74b9ff']];
   (profiles||[]).forEach(prof=>{
     if(CHATS.find(c=>c.id===prof.id)) return;
@@ -654,6 +654,7 @@ async function loadChats(){
       ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),
       g:GRADS[gi],online:false,fav:false,
       username:prof.username||'',
+      verified:prof.verified||false,
       lastText:lastMsg?(lastMsg.photos?.length?'📷 Фото':lastMsg.text):'',
       lastTs:lastMsg?new Date(lastMsg.created_at).getTime():0,
     });
@@ -669,6 +670,21 @@ function makeChatId(a,b){return [a,b].sort().join('_');}
 let typingChannel=null;
 let typingTimer=null;
 let typingHideTimer=null;
+// Сохраняем текущий статус для восстановления
+let currentPresenceText='';
+let currentPresenceClass='';
+
+function showTyping(){
+  const chs=Q('chs');
+  if(!chs) return;
+  clearTimeout(typingHideTimer);
+  chs.textContent='печатает...';
+  chs.className='chs on';
+  typingHideTimer=setTimeout(()=>{
+    if(chs){chs.textContent=currentPresenceText;chs.className=currentPresenceClass;}
+    const tb=Q('typing-bar');if(tb)tb.style.display='none';
+  },2500);
+}
 
 function startTyping(){
   if(!S.cur||S.cur==='fav'||!ME.id) return;
@@ -676,11 +692,9 @@ function startTyping(){
     typingChannel.send({type:'broadcast',event:'typing',payload:{uid:ME.id,name:ME.name}});
   }
   clearTimeout(typingTimer);
-  typingTimer=setTimeout(stopTyping,3000);
+  typingTimer=setTimeout(()=>{},3000);
 }
-function stopTyping(){
-  // Ничего не отправляем — просто перестаём слать typing
-}
+
 function subscribeTyping(partnerId){
   if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
   const chatId=makeChatId(ME.id,partnerId);
@@ -688,12 +702,7 @@ function subscribeTyping(partnerId){
   typingChannel
     .on('broadcast',{event:'typing'},payload=>{
       if(payload.payload?.uid===ME.id) return;
-      const tb=Q('typing-bar');
-      if(tb){
-        tb.style.display='flex';
-        clearTimeout(typingHideTimer);
-        typingHideTimer=setTimeout(()=>{if(tb)tb.style.display='none';},2500);
-      }
+      showTyping();
     })
     .subscribe();
 }
@@ -818,13 +827,13 @@ async function sendMessage(text,photos,replyTo,replyName){
   const msgsEl=Q('msgs');if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
 
   try{
-    // Правильная обработка эмодзи для PostgreSQL
-    // Преобразуем суррогатные пары в настоящие Unicode символы
-    const safeText=(text||'').split('').map(c=>{
-      const code=c.charCodeAt(0);
-      if(code>=0xD800&&code<=0xDFFF) return ''; // убираем одиночные суррогаты
-      return c;
-    }).join('');
+    // Правильная обработка эмодзи для PostgreSQL (iOS/Android)
+    // Преобразуем строку через JSON чтобы получить правильные Unicode codepoints
+    let safeText='';
+    try{
+      // Используем Array.from который правильно обрабатывает суррогатные пары
+      safeText=Array.from(text||'').join('');
+    }catch(e){safeText=(text||'').replace(/[\uD800-\uDFFF]/g,'');}
 
     const insertData={chat_id:chatId,sender_id:ME.id,text:safeText};
     if(photos&&photos.filter(p=>p&&!p.startsWith('blob:')).length){
@@ -990,7 +999,7 @@ const Z={
       return;
     }
     const q=v.trim().replace(/^@/,'');
-    sb.from('profiles').select('id,full_name,username,avatar_url')
+    sb.from('profiles').select('id,full_name,username,avatar_url,verified')
       .ilike('username',`%${q}%`).neq('id',ME.id).limit(20)
       .then(({data})=>{
         s.innerHTML='';
@@ -1007,7 +1016,7 @@ const Z={
             if(idx>=0) subHtml='@'+uname.slice(0,idx)+'<mark style="background:#d4e7ff;color:#1e50ff;border-radius:3px;padding:0 1px">'+uname.slice(idx,idx+q.length)+'</mark>'+uname.slice(idx+q.length);
             else subHtml='@'+uname;
           }
-          const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:'@'+uname,subHtml,photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname};
+          const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:'@'+uname,subHtml,photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname,verified:prof.verified||false};
           const recent=JSON.parse(LS.get('nvtg_recent','[]'));
           if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:uname});if(recent.length>15)recent.pop();LS.setJ('nvtg_recent',recent);}
           s.appendChild(Z.bci(c,i,subHtml));
@@ -1029,6 +1038,13 @@ const Z={
     const cb=document.createElement('div'); cb.className='cb';
     const r1=document.createElement('div'); r1.className='cr1';
     const nm=document.createElement('span'); nm.className='cn'; nm.textContent=c.name;
+    // Галочка верификации
+    if(c.verified){
+      const vbadge=document.createElement('span');
+      vbadge.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      vbadge.style.cssText='display:inline-flex;align-items:center;margin-left:3px;flex-shrink:0';
+      nm.appendChild(vbadge);
+    }
     if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nm,tm);}
     else r1.append(nm);
     const r2=document.createElement('div'); r2.className='cr2';
@@ -1072,14 +1088,18 @@ const Z={
     const chs=Q('chs');
     if(!c.fav&&id!==ME.id){
       getPresence(id).then(p=>{
-        chs.textContent=presenceText(p);
-        chs.className='chs'+(isOnline(p)?' on':'');
+        currentPresenceText=presenceText(p);
+        currentPresenceClass='chs'+(isOnline(p)?' on':'');
+        chs.textContent=currentPresenceText;
+        chs.className=currentPresenceClass;
       });
       if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
       presenceSub=subscribePresence(id,p=>{
         if(S.cur!==id)return;
-        chs.textContent=presenceText(p);
-        chs.className='chs'+(isOnline(p)?' on':'');
+        currentPresenceText=presenceText(p);
+        currentPresenceClass='chs'+(isOnline(p)?' on':'');
+        chs.textContent=currentPresenceText;
+        chs.className=currentPresenceClass;
       });
     } else {
       chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
@@ -1231,8 +1251,10 @@ const Z={
 
   // SEND
   async sm(){
-    const ta=Q('ta'), text=(ta?ta.value:'').trim(), hp=S.photos.length>0;
-    const capInp=Q('cap-inp'), capText=capInp?capInp.value.trim():'';
+    const ta=Q('ta'), rawText=(ta?ta.value:''), hp=S.photos.length>0;
+    // Правильная обработка текста с эмодзи (Array.from обрабатывает суррогатные пары)
+    const text=Array.from(rawText).join('').trim();
+    const capInp=Q('cap-inp'), capText=capInp?Array.from(capInp.value||'').join('').trim():'';
     if((!text&&!hp)||!S.cur) return;
 
     if(S.mode==='edit'&&S.mdata){
