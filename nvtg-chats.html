@@ -449,6 +449,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
         <div id="up-name" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535"></div>
         <div id="up-user" style="font-size:.85rem;color:#1e50ff;font-weight:600;margin-top:3px"></div>
         <div id="up-status" style="font-size:.78rem;color:#7a87ac;margin-top:4px"></div>
+        <div id="up-bio" style="font-size:.82rem;color:#7a87ac;margin-top:8px;line-height:1.5;max-width:260px;display:none"></div>
       </div>
     </div>
     <div style="border-top:1px solid #dde3f5;margin:0 16px"></div>
@@ -546,11 +547,16 @@ let CHATS=[
 // ── LOAD REAL CHATS FROM SUPABASE ──
 async function loadChats(){
   if(!ME.id) return;
-  // Get all messages where I'm a participant, grouped by chat_id
+  // Сбрасываем список (кроме избранного)
+  CHATS=CHATS.filter(c=>c.fav);
+
+  // Получаем все chat_id где я участник (через RLS политику)
   const {data:msgs}=await sb.from('messages')
-    .select('chat_id,sender_id,created_at')
+    .select('chat_id,sender_id,created_at,text,photos')
     .order('created_at',{ascending:false});
-  if(!msgs) return;
+  if(!msgs||!msgs.length){Z.rl();return;}
+
+  // Собираем уникальных партнёров только из реальных сообщений
   const seen=new Set();
   const partnerIds=[];
   msgs.forEach(m=>{
@@ -558,31 +564,34 @@ async function loadChats(){
     const other=parts.find(p=>p!==ME.id);
     if(other&&!seen.has(other)){seen.add(other);partnerIds.push({uid:other,chatId:m.chat_id});}
   });
-  // Also check recent searches
-  const recentSearches=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
-  recentSearches.forEach(r=>{
-    if(!seen.has(r.id)){seen.add(r.id);partnerIds.push({uid:r.id,chatId:makeChatId(ME.id,r.id)});}
-  });
-  // Load profiles for all partners
-  if(partnerIds.length){
-    const ids=partnerIds.map(p=>p.uid);
-    const {data:profiles}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',ids);
-    const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd'],['#e74c3c','#ff7675'],['#2980b9','#74b9ff']];
-    (profiles||[]).forEach(prof=>{
-      if(CHATS.find(c=>c.id===prof.id)) return;
-      const gi=prof.id.charCodeAt(0)%GRADS.length;
-      const info=partnerIds.find(p=>p.uid===prof.id);
-      CHATS.push({
-        id:prof.id,
-        chatId:info?.chatId||makeChatId(ME.id,prof.id),
-        name:prof.full_name||prof.username||'Пользователь',
-        sub:'',photo:prof.avatar_url||null,
-        ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),
-        g:GRADS[gi],online:false,fav:false,
-        username:prof.username||''
-      });
+
+  if(!partnerIds.length){Z.rl();return;}
+
+  // Загружаем профили партнёров
+  const ids=partnerIds.map(p=>p.uid);
+  const {data:profiles}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',ids);
+  const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd'],['#e74c3c','#ff7675'],['#2980b9','#74b9ff']];
+  (profiles||[]).forEach(prof=>{
+    if(CHATS.find(c=>c.id===prof.id)) return;
+    const gi=(prof.id||'a').charCodeAt(0)%GRADS.length;
+    const info=partnerIds.find(p=>p.uid===prof.id);
+    // Последнее сообщение
+    const lastMsg=msgs.find(m=>m.chat_id===info?.chatId);
+    CHATS.push({
+      id:prof.id,
+      chatId:info?.chatId||makeChatId(ME.id,prof.id),
+      name:prof.full_name||prof.username||'Пользователь',
+      sub:prof.username?('@'+prof.username):'',
+      photo:prof.avatar_url||null,
+      ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),
+      g:GRADS[gi],online:false,fav:false,
+      username:prof.username||'',
+      lastText:lastMsg?(lastMsg.photos?.length?'📷 Фото':lastMsg.text):'',
+      lastTs:lastMsg?new Date(lastMsg.created_at).getTime():0,
     });
-  }
+  });
+  // Сортируем по последнему сообщению
+  CHATS.sort((a,b)=>a.fav?-1:b.fav?1:(b.lastTs||0)-(a.lastTs||0));
   Z.rl();
 }
 
@@ -597,27 +606,24 @@ function subscribeNewMessages(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async payload=>{
       const m=payload.new;
       const parts=m.chat_id.split('_');
-      if(!parts.includes(ME.id)) return; // not my message
-      if(m.sender_id===ME.id) return; // I sent it
-      // It's a new message FROM someone TO me
+      if(!parts.includes(ME.id)) return;
+      if(m.sender_id===ME.id) return;
       const partnerId=parts.find(p=>p!==ME.id);
-      // Add to CHATS if not there
+      // Добавляем в CHATS если нет
       if(!CHATS.find(c=>c.id===partnerId)){
         const {data:prof}=await sb.from('profiles').select('*').eq('id',partnerId).single();
         if(prof){
           const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
-          const gi=prof.id.charCodeAt(0)%GRADS.length;
-          CHATS.push({id:prof.id,chatId:m.chat_id,name:prof.full_name||prof.username||'?',sub:'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||''});
+          const gi=(prof.id||'a').charCodeAt(0)%GRADS.length;
+          CHATS.push({id:prof.id,chatId:m.chat_id,name:prof.full_name||prof.username||'?',sub:prof.username?('@'+prof.username):'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||'',lastText:m.photos?.length?'📷 Фото':m.text,lastTs:new Date(m.created_at).getTime()});
         }
+      } else {
+        // Обновляем последнее сообщение
+        const chat=CHATS.find(c=>c.id===partnerId);
+        if(chat){chat.lastText=m.photos?.length?'📷 Фото':m.text;chat.lastTs=new Date(m.created_at).getTime();}
       }
-      // If not currently in this chat — increment unread
-      if(S.cur!==partnerId){
-        unreadCounts[partnerId]=(unreadCounts[partnerId]||0)+1;
-      }
-      // If currently in this chat — load messages
-      if(S.cur===partnerId){
-        await loadMessages(partnerId);
-      }
+      if(S.cur!==partnerId) unreadCounts[partnerId]=(unreadCounts[partnerId]||0)+1;
+      if(S.cur===partnerId) await loadMessages(partnerId);
       Z.rl();
     })
     .subscribe();
@@ -831,7 +837,6 @@ const Z={
   tls(){const b=Q('lsbar');b.classList.toggle('on');if(b.classList.contains('on')){Q('lsinp').focus();Z.fl('');}else{Q('lsinp').value='';Z.rl();}},
   bci(c,i){
     const unread=c.fav?0:(unreadCounts[c.id]||0);
-    const lastMsg=c.fav?null:null; // will show last message later
     const el=document.createElement('div'); el.className='ci'+(S.cur===c.id?' act':''); el.style.animationDelay=(i*.04)+'s'; el.onclick=()=>Z.oc(c.id);
     const aw=document.createElement('div'); aw.className='aw';
     const ai=document.createElement('div'); ai.className='ai'; ai.style.background=`linear-gradient(135deg,${c.g[0]},${c.g[1]})`;
@@ -844,10 +849,14 @@ const Z={
     const cb=document.createElement('div'); cb.className='cb';
     const r1=document.createElement('div'); r1.className='cr1';
     const nm=document.createElement('span'); nm.className='cn'; nm.textContent=c.name;
-    r1.append(nm);
+    // Время последнего сообщения
+    if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nm,tm);}
+    else r1.append(nm);
     const r2=document.createElement('div'); r2.className='cr2';
     const mg=document.createElement('span'); mg.className='cm';
-    mg.textContent=c.fav?'Сохранённые заметки':(c.sub||'Нажмите чтобы начать чат');
+    if(c.fav) mg.textContent='Сохранённые заметки';
+    else if(c.lastText) mg.textContent=c.lastText;
+    else mg.textContent=c.username?('@'+c.username):'';
     r2.appendChild(mg);
     if(unread>0){const b=document.createElement('span');b.className='cbg';b.textContent=unread;r2.appendChild(b);}
     cb.append(r1,r2); el.appendChild(cb);
@@ -1223,9 +1232,13 @@ const Z={
   cpm(){closeD();if(!S.cmid||!S.cur) return;S.pin[S.cur]=S.cmid;sv();Z.upb();Z.rm();},
   cdcm(){
     closeD();if(!S.dchid) return;
-    // Delete all messages in this chat from Supabase
     const chatId=makeChatId(ME.id,S.dchid);
-    sb.from('messages').update({deleted_for_all:true}).eq('chat_id',chatId).then(()=>{});
+    const delForAll=Q('dca')?.checked;
+    if(delForAll){
+      // Удалить для обоих — помечаем все сообщения как удалённые
+      sb.from('messages').update({deleted_for_all:true}).eq('chat_id',chatId).then(()=>{});
+    }
+    // Удаляем чат из своего списка в любом случае
     CHATS=CHATS.filter(c=>c.id!==S.dchid);
     delete S.pin[S.dchid];sv();Z.bl();Z.rl();
   }
@@ -1263,7 +1276,6 @@ async function openUP(uid){
   const ov=Q('upov');ov.style.display='flex';
   const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
   const gi=(uid||'a').charCodeAt(0)%GRADS.length;
-  // Load profile
   const {data:prof}=await sb.from('profiles').select('*').eq('id',uid).single();
   if(!prof){ov.style.display='none';return;}
   const av=Q('up-av');
@@ -1271,11 +1283,15 @@ async function openUP(uid){
   if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
   else{av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
   Q('up-name').textContent=prof.full_name||prof.username||'Пользователь';
+  // Один @ перед username
   Q('up-user').textContent=prof.username?('@'+prof.username):'';
+  // Bio
+  const bioEl=Q('up-bio');
+  if(bioEl){bioEl.textContent=prof.bio||'';bioEl.style.display=prof.bio?'block':'none';}
   // Presence
   const p=await getPresence(uid);
   Q('up-status').textContent=presenceText(p);
-  Q('up-status').style.color=p?.is_online?'var(--ok)':'var(--muted)';
+  Q('up-status').style.color=p?.is_online?'#00c26f':'#7a87ac';
 }
 function closeUP(){Q('upov').style.display='none';}
 
