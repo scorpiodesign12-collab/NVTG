@@ -579,13 +579,13 @@ let CHATS=[
 // ── LOAD REAL CHATS FROM SUPABASE ──
 async function loadChats(){
   if(!ME.id) return;
-  // Сбрасываем список (кроме избранного)
   CHATS=CHATS.filter(c=>c.fav);
-
-  // Получаем все chat_id где я участник (через RLS политику)
-  const {data:msgs}=await sb.from('messages')
+  console.log('loadChats: ME.id=', ME.id);
+  const {data:msgs, error}=await sb.from('messages')
     .select('chat_id,sender_id,created_at,text,photos')
     .order('created_at',{ascending:false});
+  console.log('loadChats messages:', {msgs, error});
+  if(error){console.error('loadChats error:',error);Z.rl();return;}
   if(!msgs||!msgs.length){Z.rl();return;}
 
   // Собираем уникальных партнёров только из реальных сообщений
@@ -677,14 +677,15 @@ let chatSub=null;
 async function loadMessages(partnerId){
   if(!ME.id||!partnerId) return;
   const chatId=makeChatId(ME.id,partnerId);
+  console.log('Loading messages for chatId:', chatId, 'ME.id:', ME.id);
   try{
-    // Таймаут 5 секунд
-    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000));
-    const query=sb.from('messages').select('*').eq('chat_id',chatId).order('created_at',{ascending:true});
-    const {data,error}=await Promise.race([query,timeout]);
+    const {data,error}=await sb.from('messages')
+      .select('*')
+      .eq('chat_id',chatId)
+      .order('created_at',{ascending:true});
+    console.log('loadMessages result:', {data,error,chatId});
     if(error){
-      console.warn('loadMessages RLS error — пробуем без фильтра',error);
-      // Пробуем через другой запрос
+      console.error('loadMessages error:', error);
       currentMsgs=[];Z.rm();return;
     }
     currentMsgs=(data||[])
@@ -698,9 +699,8 @@ async function loadMessages(partnerId){
     Z.rm();
     setTimeout(()=>{const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;},50);
   }catch(e){
-    console.warn('loadMessages exception',e.message);
-    currentMsgs=[];
-    Z.rm();// Показываем пустой чат
+    console.error('loadMessages exception:',e);
+    currentMsgs=[];Z.rm();
   }
 }
 
@@ -749,6 +749,7 @@ async function sendMessage(text,photos,replyTo,replyName){
   const msgsEl=Q('msgs');if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
 
   try{
+    console.log('Sending message:', {chatId, text, ME_id: ME.id});
     const {data,error}=await sb.from('messages').insert({
       chat_id:chatId,
       sender_id:ME.id,
