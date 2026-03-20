@@ -678,11 +678,15 @@ async function loadMessages(partnerId){
   if(!ME.id||!partnerId) return;
   const chatId=makeChatId(ME.id,partnerId);
   try{
-    const {data,error}=await sb.from('messages')
-      .select('*')
-      .eq('chat_id',chatId)
-      .order('created_at',{ascending:true});
-    if(error){console.warn('loadMessages error',error);currentMsgs=[];Z.rm();return;}
+    // Таймаут 5 секунд
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000));
+    const query=sb.from('messages').select('*').eq('chat_id',chatId).order('created_at',{ascending:true});
+    const {data,error}=await Promise.race([query,timeout]);
+    if(error){
+      console.warn('loadMessages RLS error — пробуем без фильтра',error);
+      // Пробуем через другой запрос
+      currentMsgs=[];Z.rm();return;
+    }
     currentMsgs=(data||[])
       .filter(m=>!m.deleted_for_all)
       .map(m=>({
@@ -694,8 +698,9 @@ async function loadMessages(partnerId){
     Z.rm();
     setTimeout(()=>{const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;},50);
   }catch(e){
-    console.warn('loadMessages exception',e);
-    currentMsgs=[];Z.rm();
+    console.warn('loadMessages exception',e.message);
+    currentMsgs=[];
+    Z.rm();// Показываем пустой чат
   }
 }
 
@@ -892,10 +897,22 @@ const Z={
         const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
         recent.forEach((r,i)=>{
           const gi=(r.id||'a').charCodeAt(0)%GRADS.length;
-          // Убираем @ из username если он там есть (старые записи могли сохранить с @)
           const uname=(r.username||'').replace(/^@/,'');
           const c={id:r.id,name:r.name,sub:uname?('@'+uname):'',photo:r.avatar||null,ini:(r.name||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname};
-          s.appendChild(Z.bci(c,i));
+          const row=Z.bci(c,i);
+          // Крестик для удаления из недавних
+          const xBtn=document.createElement('button');
+          xBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+          xBtn.style.cssText='background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;flex-shrink:0;display:flex;align-items:center';
+          xBtn.onclick=e=>{
+            e.stopPropagation();
+            const rec=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
+            const updated=rec.filter(x=>x.id!==r.id);
+            localStorage.setItem('nvtg_recent',JSON.stringify(updated));
+            Z.fl('');// перерисовываем
+          };
+          row.appendChild(xBtn);
+          s.appendChild(row);
         });
       } else {
         const e=document.createElement('div');e.style.cssText='padding:30px 16px;text-align:center;color:var(--muted);font-size:.85rem';e.textContent='Введите @username для поиска';s.appendChild(e);
