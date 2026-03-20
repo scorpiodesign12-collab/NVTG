@@ -98,6 +98,18 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .back{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--blue);outline:none}
 .chav{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:#fff}
 .chav img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* TYPING INDICATOR */
+#typing-bar{height:18px;display:flex;align-items:center;padding:0 14px;gap:6px;flex-shrink:0}
+.typing-dots{display:flex;gap:3px;align-items:center}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:tdot 1.2s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.typing-text{font-size:.72rem;color:var(--muted);font-style:italic}
+
+/* Fix emoji in textarea */
+.iw textarea{font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji','Manrope',sans-serif!important;}
 .chin{flex:1;min-width:0}
 .chn{font-size:.93rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chs{font-size:.72rem;color:var(--muted)}
@@ -377,6 +389,10 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
       <button class="ib" onclick="Z.tcs()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
       <button class="ib" id="hdots" onclick="Z.thm(event)"><svg width="4" height="18" viewBox="0 0 4 20" fill="currentColor"><circle cx="2" cy="2" r="2"/><circle cx="2" cy="10" r="2"/><circle cx="2" cy="18" r="2"/></svg></button>
     </div>
+    <div id="typing-bar" style="display:none">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+      <div class="typing-text" id="typing-text">печатает...</div>
+    </div>
 
     <div id="csbar">
       <input type="text" id="csinp" placeholder="Поиск по сообщениям..." oninput="Z.sc(this.value)">
@@ -649,6 +665,39 @@ async function loadChats(){
 
 function makeChatId(a,b){return [a,b].sort().join('_');}
 
+// ── TYPING INDICATOR ──
+let typingChannel=null;
+let typingTimer=null;
+let typingHideTimer=null;
+
+function startTyping(){
+  if(!S.cur||S.cur==='fav'||!ME.id) return;
+  if(typingChannel){
+    typingChannel.send({type:'broadcast',event:'typing',payload:{uid:ME.id,name:ME.name}});
+  }
+  clearTimeout(typingTimer);
+  typingTimer=setTimeout(stopTyping,3000);
+}
+function stopTyping(){
+  // Ничего не отправляем — просто перестаём слать typing
+}
+function subscribeTyping(partnerId){
+  if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
+  const chatId=makeChatId(ME.id,partnerId);
+  typingChannel=sb.channel('typing-'+chatId);
+  typingChannel
+    .on('broadcast',{event:'typing'},payload=>{
+      if(payload.payload?.uid===ME.id) return;
+      const tb=Q('typing-bar');
+      if(tb){
+        tb.style.display='flex';
+        clearTimeout(typingHideTimer);
+        typingHideTimer=setTimeout(()=>{if(tb)tb.style.display='none';},2500);
+      }
+    })
+    .subscribe();
+}
+
 // ── SUBSCRIBE TO NEW MESSAGES (for blue dot notifications) ──
 let msgSub=null;
 let unreadCounts={};
@@ -659,9 +708,10 @@ function subscribeNewMessages(){
       const m=payload.new;
       const parts=m.chat_id.split('_');
       if(!parts.includes(ME.id)) return;
-      if(m.sender_id===ME.id) return;
+      if(m.sender_id===ME.id) return; // Мои исходящие — не уведомляем
       const partnerId=parts.find(p=>p!==ME.id);
-      // Добавляем в CHATS если нет
+      if(!partnerId||partnerId===ME.id) return; // Это сообщение самому себе (не должно быть)
+
       if(!CHATS.find(c=>c.id===partnerId)){
         const {data:prof}=await sb.from('profiles').select('*').eq('id',partnerId).single();
         if(prof){
@@ -670,7 +720,6 @@ function subscribeNewMessages(){
           CHATS.push({id:prof.id,chatId:m.chat_id,name:prof.full_name||prof.username||'?',sub:prof.username?('@'+prof.username):'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||'',lastText:m.photos?.length?'📷 Фото':m.text,lastTs:new Date(m.created_at).getTime()});
         }
       } else {
-        // Обновляем последнее сообщение
         const chat=CHATS.find(c=>c.id===partnerId);
         if(chat){chat.lastText=m.photos?.length?'📷 Фото':m.text;chat.lastTs=new Date(m.created_at).getTime();}
       }
@@ -769,30 +818,33 @@ async function sendMessage(text,photos,replyTo,replyName){
   const msgsEl=Q('msgs');if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
 
   try{
-    console.log('Sending message:', {chatId, text, ME_id: ME.id});
-    // Строим объект только с нужными полями
-    const safeText=(text||'').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\x00-\uFFFF]/g,c=>c); // оставляем все символы включая эмодзи
-    const insertData={
-      chat_id:chatId,
-      sender_id:ME.id,
-      text:safeText
-    };
-    if(photos&&photos.length) insertData.photos=photos;
+    // Правильная обработка эмодзи для PostgreSQL
+    // Преобразуем суррогатные пары в настоящие Unicode символы
+    const safeText=(text||'').split('').map(c=>{
+      const code=c.charCodeAt(0);
+      if(code>=0xD800&&code<=0xDFFF) return ''; // убираем одиночные суррогаты
+      return c;
+    }).join('');
+
+    const insertData={chat_id:chatId,sender_id:ME.id,text:safeText};
+    if(photos&&photos.filter(p=>p&&!p.startsWith('blob:')).length){
+      insertData.photos=photos.filter(p=>p&&!p.startsWith('blob:'));
+    }
     if(replyTo) insertData.reply_to=replyTo;
     if(replyName) insertData.reply_name=replyName;
+
+    console.log('Sending message:', {chatId,text:safeText,ME_id:ME.id});
 
     const {data,error}=await sb.from('messages').insert(insertData).select().single();
 
     if(error){
       console.warn('Send error',error);
-      // Удаляем оптимистичное сообщение при ошибке
       const idx=currentMsgs.findIndex(m=>m.id===tmpId);
       if(idx>=0) currentMsgs.splice(idx,1);
       Z.rm();
       return;
     }
 
-    // Обновляем временное сообщение реальным
     const idx=currentMsgs.findIndex(m=>m.id===tmpId);
     if(idx>=0){
       currentMsgs[idx]={...currentMsgs[idx],id:data.id,status:'delivered',dbId:data.id,ts:new Date(data.created_at).getTime()};
@@ -800,9 +852,8 @@ async function sendMessage(text,photos,replyTo,replyName){
     Z.rm();
     if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
 
-    // Обновляем последнее сообщение в списке чатов
     const chat=CHATS.find(c=>c.id===S.cur);
-    if(chat){chat.lastText=photos?.length?'📷 Фото':text;chat.lastTs=Date.now();}
+    if(chat){chat.lastText=photos?.length?'📷 Фото':safeText;chat.lastTs=Date.now();}
     Z.rl();
   }catch(e){
     console.warn('sendMessage exception',e);
@@ -1034,6 +1085,7 @@ const Z={
       chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
     }
     Z.upb(); S.photos=[]; Z.uph(); Z.cs();
+    const tb=Q('typing-bar');if(tb)tb.style.display='none';
     currentMsgs=[];
     if(c.fav){
       currentMsgs=LS.getJ('nv4_fav',[]);Z.rm();
@@ -1041,6 +1093,7 @@ const Z={
       Q('msgs').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.82rem">Загрузка...</div>';
       await loadMessages(id);
       subscribeChatMessages(id);
+      subscribeTyping(id);
     }
     setTimeout(()=>{const m=Q('msgs');if(m)m.scrollTop=m.scrollHeight;},30);
     Q('ta').focus();
@@ -1049,6 +1102,8 @@ const Z={
     Q('pc').classList.remove('open');S.cur=null;
     if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
     if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
+    if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
+    const tb=Q('typing-bar');if(tb)tb.style.display='none';
   },
 
   // RENDER ALL MESSAGES
@@ -1213,7 +1268,11 @@ const Z={
     }
   },
   hk(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();Z.sm();}},
-  ck(){const ta=Q('ta'),snd=Q('snd');if(snd)snd.disabled=!(ta?.value.trim()||S.photos.length);},
+  ck(){
+    const ta=Q('ta'),snd=Q('snd');
+    if(snd)snd.disabled=!(ta?.value.trim()||S.photos.length);
+    if(ta?.value.trim()) startTyping();
+  },
   ar(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';},
 
   // STRIP
