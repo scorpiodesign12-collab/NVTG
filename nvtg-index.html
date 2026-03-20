@@ -128,7 +128,7 @@ input[type=text]:focus~.il,input[type=password]:focus~.il{color:var(--blue)}
         </div>
         <div class="f"><label>Имя</label><div class="iw"><input type="text" id="rn" placeholder="Ваше имя" maxlength="30" oninput="vi('rn')"><span class="il"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="fok" id="o-rn"></span></div></div>
         <div class="f"><label>Юзернейм</label><div class="iw"><input type="text" id="ru" placeholder="@username" maxlength="20" oninput="vi('ru')"><span class="il"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg></span><span class="fok" id="o-ru"></span></div><div class="hint">Только латиница, цифры, _ (мин. 3 символа)</div></div>
-        <div class="f"><label>Email</label><div class="iw"><input type="text" id="rem" placeholder="email@example.com" oninput="ck1()"><span class="il"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span></div></div>
+
         <div id="err1" class="err-msg"></div>
         <button class="btn blue" id="ns-btn" disabled onclick="go2()">Далее →</button>
       </div>
@@ -209,8 +209,8 @@ function updMatch(){
   m.innerHTML=ok?'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 }
 function ck1(){
-  const n=document.getElementById('rn').value,u=document.getElementById('ru').value,e=document.getElementById('rem').value;
-  document.getElementById('ns-btn').disabled=!(n.length>=3&&u.length>=4&&e.includes('@'));
+  const n=document.getElementById('rn').value,u=document.getElementById('ru').value;
+  document.getElementById('ns-btn').disabled=!(n.length>=3&&u.length>=4);
 }
 function ck2(){const p1=document.getElementById('rp1').value,p2=document.getElementById('rp2').value;document.getElementById('rb').disabled=!(pwS(p1)>=4&&p1===p2&&p2.length>0);}
 function go2(){document.getElementById('s1').classList.remove('act');document.getElementById('s2').classList.add('act');updBar('');updMatch();ck2();}
@@ -227,7 +227,7 @@ async function doReg(){
   document.getElementById('err2').textContent='';
   const name=document.getElementById('rn').value.trim();
   const rawu=document.getElementById('ru').value.replace('@','').toLowerCase();
-  const email=document.getElementById('rem').value.trim();
+  const email=rawu+'@nvtg.app';
   const pass=document.getElementById('rp1').value;
   try {
     // check username unique
@@ -244,7 +244,7 @@ async function doReg(){
       const {data:pu}=sb.storage.from('avatars').getPublicUrl(path);
       avatarUrl=pu.publicUrl+'?t='+Date.now();
     }
-    const {error:pe}=await sb.from('profiles').insert({id:uid,username:'@'+rawu,full_name:name,avatar_url:avatarUrl});
+    const {error:pe}=await sb.from('profiles').insert({id:uid,username:'@'+rawu,full_name:name,avatar_url:avatarUrl,email:email});
     if(pe) throw pe;
     location.href='nvtg-chats.html';
   } catch(e){
