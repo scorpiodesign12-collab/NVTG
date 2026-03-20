@@ -52,7 +52,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .avc img{width:100%;height:100%;object-fit:cover;display:block}
 .avcam{position:absolute;bottom:3px;right:3px;width:26px;height:26px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;border:2.5px solid var(--w)}
 .avcam svg{width:12px;height:12px;color:#fff}
-.hn{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--n);text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0}
+.hn{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--n);text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center}
 .hu{font-size:.82rem;color:var(--b);font-weight:600;margin-bottom:3px;cursor:pointer;transition:opacity .15s}
 .hu:hover{opacity:.7}
 .hs{font-size:.75rem;color:var(--ok);font-weight:500}
@@ -194,17 +194,13 @@ async function doLogout(){await sb.auth.signOut();location.href='nvtg-index.html
 
 function render(){
   const full=D.name||'Пользователь';
-  // Имя + галочка verified
-  Q('hn').innerHTML='';
-  Q('hn').appendChild(document.createTextNode(full));
-  if(D.verified){
-    const vb=document.createElement('svg');
-    vb.setAttribute('width','20');vb.setAttribute('height','20');vb.setAttribute('viewBox','0 0 24 24');vb.setAttribute('fill','#1e50ff');
-    vb.style.cssText='display:inline-flex;align-items:center;margin-left:6px;vertical-align:middle;flex-shrink:0';
-    vb.innerHTML='<path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
-    Q('hn').appendChild(vb);
-  }
   const uname=(D.user||'').replace(/^@/,'');
+  // Имя + галочка
+  if(D.verified){
+    Q('hn').innerHTML=`${full.replace(/</g,'&lt;')}<svg width="20" height="20" viewBox="0 0 24 24" fill="#1e50ff" style="display:inline-flex;align-items:center;margin-left:6px;vertical-align:middle;flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  } else {
+    Q('hn').textContent=full;
+  }
   Q('hu').textContent=uname?('@'+uname):D.user;
   Q('rusr').textContent=uname?('@'+uname):D.user;
   Q('rnm').textContent=full;
