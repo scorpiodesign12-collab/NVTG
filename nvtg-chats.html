@@ -509,17 +509,17 @@ function startPresence(){
 }
 function presenceText(p){
   if(!p) return 'не в сети';
-  if(p.is_online){
-    // Проверяем last_seen - если давно не обновлялся, считаем оффлайн
-    const diff=Math.floor((Date.now()-new Date(p.last_seen))/1000);
-    if(diff>90) return `был(а) ${Math.floor(diff/60)} мин назад`;
-    return 'в сети';
-  }
   const diff=Math.floor((Date.now()-new Date(p.last_seen))/1000);
+  // Считаем онлайн только если last_seen обновлялся недавно (до 70 сек)
+  if(p.is_online && diff<=70) return 'в сети';
   if(diff<60) return 'был(а) только что';
-  if(diff<3600){const m=Math.floor(diff/60);return `был(а) ${m} ${m===1?'мин':m<5?'мин':'мин'} назад`;}
+  if(diff<3600){const m=Math.floor(diff/60);return `был(а) ${m} мин назад`;}
   if(diff<86400){const h=Math.floor(diff/3600);return `был(а) ${h} ${h===1?'час':h<5?'часа':'часов'} назад`;}
   const d=Math.floor(diff/86400);return `был(а) ${d} ${d===1?'день':d<5?'дня':'дней'} назад`;
+}
+function isOnline(p){
+  if(!p||!p.is_online) return false;
+  return Math.floor((Date.now()-new Date(p.last_seen))/1000)<=70;
 }
 async function getPresence(uid){
   const {data}=await sb.from('presence').select('*').eq('user_id',uid).single();
@@ -537,11 +537,18 @@ async function loadProfile(){
     const {data:{user}}=await sb.auth.getUser();
     if(!user){location.href='nvtg-index.html';return;}
     ME.id=user.id;
+
+    // Если аккаунт сменился — чистим недавних
+    const savedUid=localStorage.getItem('nvtg_uid');
+    if(savedUid && savedUid!==ME.id){
+      localStorage.removeItem('nvtg_recent');
+    }
+    localStorage.setItem('nvtg_uid',ME.id);
+
     const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).single();
     if(p){
       ME.name=p.full_name||'Пользователь';
-      // Сохраняем username БЕЗ @, добавляем @ при показе
-      ME.username=p.username||'';
+      ME.username=(p.username||'').replace(/^@/,''); // без @
       ME.avatar=p.avatar_url||null;
       localStorage.setItem('nvtg_name',ME.name);
       localStorage.setItem('nvtg_user',ME.username);
@@ -662,28 +669,28 @@ let currentMsgs=[];
 let chatSub=null;
 
 async function loadMessages(partnerId){
+  if(!ME.id||!partnerId) return;
   const chatId=makeChatId(ME.id,partnerId);
-  const {data,error}=await sb.from('messages')
-    .select('*')
-    .eq('chat_id',chatId)
-    .order('created_at',{ascending:true});
-  if(error){console.warn('loadMessages error',error);return;}
-  currentMsgs=(data||[]).map(m=>({
-    id:m.id,
-    text:m.text||'',
-    out:m.sender_id===ME.id,
-    ts:new Date(m.created_at).getTime(),
-    status:'read',
-    read:true,
-    photos:m.photos||[],
-    replyTo:m.reply_to||null,
-    replyName:m.reply_name||null,
-    edited:m.edited||false,
-    deleted:m.deleted_for_all||false,
-    dbId:m.id
-  })).filter(m=>!m.deleted);
-  Z.rm();
-  setTimeout(()=>{const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;},50);
+  try{
+    const {data,error}=await sb.from('messages')
+      .select('*')
+      .eq('chat_id',chatId)
+      .order('created_at',{ascending:true});
+    if(error){console.warn('loadMessages error',error);currentMsgs=[];Z.rm();return;}
+    currentMsgs=(data||[])
+      .filter(m=>!m.deleted_for_all)
+      .map(m=>({
+        id:m.id,text:m.text||'',out:m.sender_id===ME.id,
+        ts:new Date(m.created_at).getTime(),status:'read',read:true,
+        photos:m.photos||[],replyTo:m.reply_to||null,replyName:m.reply_name||null,
+        edited:m.edited||false,deleted:false,dbId:m.id
+      }));
+    Z.rm();
+    setTimeout(()=>{const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;},50);
+  }catch(e){
+    console.warn('loadMessages exception',e);
+    currentMsgs=[];Z.rm();
+  }
 }
 
 function subscribeChatMessages(partnerId){
@@ -823,13 +830,16 @@ const Z={
     const s=Q('lscroll');s.innerHTML='';
     if(!v.trim()){
       // Показываем недавних при открытии поиска
+      // Чистим недавних если они принадлежат другому аккаунту
       const recent=JSON.parse(localStorage.getItem('nvtg_recent')||'[]');
       if(recent.length){
         const l=document.createElement('div');l.className='llbl';l.textContent='Недавние';s.appendChild(l);
         const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
         recent.forEach((r,i)=>{
           const gi=(r.id||'a').charCodeAt(0)%GRADS.length;
-          const c={id:r.id,name:r.name,sub:r.username?('@'+r.username):'',photo:r.avatar||null,ini:(r.name||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:r.username||''};
+          // Убираем @ из username если он там есть (старые записи могли сохранить с @)
+          const uname=(r.username||'').replace(/^@/,'');
+          const c={id:r.id,name:r.name,sub:uname?('@'+uname):'',photo:r.avatar||null,ini:(r.name||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname};
           s.appendChild(Z.bci(c,i));
         });
       } else {
@@ -919,9 +929,16 @@ const Z={
     Q('chn').textContent=c.name;
     const chs=Q('chs');
     if(!c.fav&&id!==ME.id){
-      getPresence(id).then(p=>{chs.textContent=presenceText(p);chs.className='chs'+(p?.is_online?' on':'');});
+      getPresence(id).then(p=>{
+        chs.textContent=presenceText(p);
+        chs.className='chs'+(isOnline(p)?' on':'');
+      });
       if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
-      presenceSub=subscribePresence(id,p=>{if(S.cur!==id)return;chs.textContent=presenceText(p);chs.className='chs'+(p?.is_online?' on':'');});
+      presenceSub=subscribePresence(id,p=>{
+        if(S.cur!==id)return;
+        chs.textContent=presenceText(p);
+        chs.className='chs'+(isOnline(p)?' on':'');
+      });
     } else {
       chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
     }
@@ -1306,18 +1323,17 @@ async function openUP(uid){
   const av=Q('up-av');
   av.style.background=`linear-gradient(135deg,${GRADS[gi][0]},${GRADS[gi][1]})`;
   if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
-  else{av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
+  else{av.innerHTML='';av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
   Q('up-name').textContent=prof.full_name||prof.username||'Пользователь';
-  // Один @ перед username (username хранится БЕЗ @)
-  const uname=prof.username||'';
+  // username всегда один @
+  const uname=(prof.username||'').replace(/^@/,'');
   Q('up-user').textContent=uname?('@'+uname):'';
-  // Bio
   const bioEl=Q('up-bio');
   if(bioEl){bioEl.textContent=prof.bio||'';bioEl.style.display=prof.bio?'block':'none';}
-  // Presence
   const p=await getPresence(uid);
+  const online=isOnline(p);
   Q('up-status').textContent=presenceText(p);
-  Q('up-status').style.color=p?.is_online?'#00c26f':'#7a87ac';
+  Q('up-status').style.color=online?'#00c26f':'#7a87ac';
 }
 function closeUP(){Q('upov').style.display='none';}
 
