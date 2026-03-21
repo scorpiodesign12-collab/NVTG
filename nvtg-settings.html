@@ -265,7 +265,7 @@ function toggleSB(open){
   Q('sb').classList.toggle('open', open);
   Q('dov').classList.toggle('on', open);
 }
-document.addEventListener('keydown', e => { if(e.key==='Escape'){ Q('sb').classList.remove('open'); Q('dov').classList.remove('on'); closeLang(); }});
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ Q('sb').classList.remove('open'); Q('dov').classList.remove('on'); }});
 let _tx=0;
 Q('sb').addEventListener('touchstart', e=>{ _tx=e.touches[0].clientX; },{passive:true});
 Q('sb').addEventListener('touchend', e=>{ if(_tx-e.changedTouches[0].clientX>60) toggleSB(false); },{passive:true});
@@ -307,10 +307,7 @@ async function loadFromSupabase(){
 ;
 
 function setLang(l){
-  curLang = l;
   localStorage.setItem('nvtg_lang', l);
-  applyI18n(l);
-  setTimeout(closeLang, 220);
   showToast(l==='ru' ? 'Язык: Русский' : 'Language: English');
 }
 
@@ -371,6 +368,7 @@ function toggleScale(on){
 
 // ── TOAST ──
 let toastTimer;
+function closeLang(){}
 function showToast(msg){
   clearTimeout(toastTimer);
   Q('toast').textContent = msg;
@@ -402,11 +400,6 @@ function applyScaleNow(){
 
 // ── CENTER AVATAR in hero ──
 // Add center style to uhero
-document.addEventListener('DOMContentLoaded', ()=>{
-  const uhero=document.getElementById && document.querySelector && document.querySelector('.uhero');
-  if(uhero){uhero.style.justifyContent='flex-start';}
-});
-
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', ()=>{
   renderUser('Пользователь','','');

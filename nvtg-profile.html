@@ -380,32 +380,31 @@ function avatarEl(uid, av, name, size=42){
 
 async function loadFriends(){
   if(!D.id) return;
-  // Load accepted friends
-  // Load accepted friendships (simple query first)
-  const {data:fr}=await sb.from('friendships')
-    .select('requester_id,addressee_id')
-    .or(`requester_id.eq.${D.id},addressee_id.eq.${D.id}`)
-    .eq('status','accepted');
-  if(fr&&fr.length){
-    const friendIds=(fr||[]).map(f=>f.requester_id===D.id?f.addressee_id:f.requester_id);
-    const {data:fps}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',friendIds);
-    myFriends=(fps||[]);
-  } else myFriends=[];
-
-  // Load incoming requests
-  const {data:reqs}=await sb.from('friendships')
-    .select('id,requester_id').eq('addressee_id',D.id).eq('status','pending');
-  if(reqs&&reqs.length){
-    const reqIds=reqs.map(r=>r.requester_id);
-    const {data:reqPs}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',reqIds);
-    incomingReqs=(reqs||[]).map(r=>({...r,prof:(reqPs||[]).find(p=>p.id===r.requester_id)}));
-  } else incomingReqs=[];
-
-  // Load private setting
-  const {data:priv}=await sb.from('profiles').select('is_private').eq('id',D.id).single();
-  isPrivate=priv?.is_private||false;
-
-  renderFriends();
+  try{
+    const {data:fr}=await sb.from('friendships')
+      .select('requester_id,addressee_id')
+      .or(`requester_id.eq.${D.id},addressee_id.eq.${D.id}`)
+      .eq('status','accepted');
+    if(fr&&fr.length){
+      const friendIds=fr.map(f=>f.requester_id===D.id?f.addressee_id:f.requester_id);
+      const {data:fps}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',friendIds);
+      myFriends=fps||[];
+    } else myFriends=[];
+    const {data:reqs}=await sb.from('friendships')
+      .select('id,requester_id').eq('addressee_id',D.id).eq('status','pending');
+    if(reqs&&reqs.length){
+      const reqIds=reqs.map(r=>r.requester_id);
+      const {data:reqPs}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',reqIds);
+      incomingReqs=reqs.map(r=>({...r,prof:(reqPs||[]).find(p=>p.id===r.requester_id)}));
+    } else incomingReqs=[];
+    const {data:priv}=await sb.from('profiles').select('is_private').eq('id',D.id).single();
+    isPrivate=priv?.is_private||false;
+    renderFriends();
+  }catch(e){
+    console.warn('loadFriends error:',e);
+    myFriends=[];incomingReqs=[];
+    renderFriends();
+  }
 }
 
 function renderFriends(){

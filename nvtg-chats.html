@@ -1988,54 +1988,61 @@ let meVerified = false; // loaded from profile
 
 async function loadReactions(chatId){
   try{
-    const {data} = await sb.from('message_reactions').select('*').eq('chat_id', chatId);
+    const {data,error} = await sb.from('message_reactions').select('*').eq('chat_id', chatId);
+    if(error){ console.warn('Reactions table missing — run SQL setup'); return; }
     reactionsMap = {};
     (data||[]).forEach(r=>{
       if(!reactionsMap[r.message_id]) reactionsMap[r.message_id]=[];
       reactionsMap[r.message_id].push(r);
     });
-  }catch(e){}
+  }catch(e){ console.warn('loadReactions:',e); }
 }
 
 async function toggleReact(msgId, emoji){
   if(!ME.id || !S.cur) return;
-  // Favorites: store reactions locally
+
+  // FAVORITES — local only
   if(S.cur==='fav'){
     if(!reactionsMap[msgId]) reactionsMap[msgId]=[];
-    const existing=reactionsMap[msgId].filter(r=>r.user_id===ME.id);
-    const alreadyThis=existing.find(r=>r.emoji===emoji);
-    if(alreadyThis) reactionsMap[msgId]=reactionsMap[msgId].filter(r=>!(r.user_id===ME.id&&r.emoji===emoji));
-    else{if(existing.length>=1) reactionsMap[msgId]=reactionsMap[msgId].filter(r=>r.user_id!==ME.id);reactionsMap[msgId].push({message_id:msgId,user_id:ME.id,emoji});}
+    const ex=reactionsMap[msgId].filter(r=>r.user_id===ME.id);
+    const already=ex.find(r=>r.emoji===emoji);
+    if(already) reactionsMap[msgId]=reactionsMap[msgId].filter(r=>!(r.user_id===ME.id&&r.emoji===emoji));
+    else{ reactionsMap[msgId]=reactionsMap[msgId].filter(r=>r.user_id!==ME.id); reactionsMap[msgId].push({message_id:msgId,user_id:ME.id,emoji}); }
     Z.rm(); return;
   }
-  const chatId = makeChatId(ME.id, S.cur);
-  const existing = (reactionsMap[msgId]||[]).filter(r=>r.user_id===ME.id);
-  const alreadyThis = existing.find(r=>r.emoji===emoji);
-  
-  // Max reactions: verified=3, non-verified=1
-  const maxR = meVerified ? 3 : 1;
-  
+
+  const chatId=makeChatId(ME.id,S.cur);
+  if(!reactionsMap[msgId]) reactionsMap[msgId]=[];
+  const existing=reactionsMap[msgId].filter(r=>r.user_id===ME.id);
+  const alreadyThis=existing.find(r=>r.emoji===emoji);
+  const maxR=meVerified?3:1;
+
+  // Optimistic update first (instant UI)
   if(alreadyThis){
-    // Remove reaction
-    reactionsMap[msgId] = (reactionsMap[msgId]||[]).filter(r=>!(r.user_id===ME.id && r.emoji===emoji));
-    try{await sb.from('message_reactions').delete().eq('message_id',msgId).eq('user_id',ME.id).eq('emoji',emoji);}catch(e){}
+    reactionsMap[msgId]=reactionsMap[msgId].filter(r=>!(r.user_id===ME.id&&r.emoji===emoji));
   } else {
-    // Add reaction (check limit)
-    if(existing.length >= maxR) {
-      // Remove oldest if at limit for non-verified, or just block for verified
-      if(!meVerified && existing.length >= 1){
-        const old = existing[0];
-        reactionsMap[msgId] = (reactionsMap[msgId]||[]).filter(r=>!(r.user_id===ME.id && r.emoji===old.emoji));
-        try{await sb.from('message_reactions').delete().eq('message_id',msgId).eq('user_id',ME.id).eq('emoji',old.emoji);}catch(e){}
-      } else if(meVerified && existing.length >= 3){
-        return; // at limit
+    if(existing.length>=maxR){
+      if(existing.length>=1){
+        const old=existing[0];
+        reactionsMap[msgId]=reactionsMap[msgId].filter(r=>!(r.user_id===ME.id&&r.emoji===old.emoji));
+        try{ await sb.from('message_reactions').delete().eq('message_id',msgId).eq('user_id',ME.id).eq('emoji',old.emoji); }catch(e){}
       }
     }
-    if(!reactionsMap[msgId]) reactionsMap[msgId]=[];
-    reactionsMap[msgId].push({message_id:msgId, user_id:ME.id, emoji, chat_id:chatId});
-    try{await sb.from('message_reactions').upsert({message_id:msgId, user_id:ME.id, emoji, chat_id:chatId},{onConflict:'message_id,user_id,emoji'});}catch(e){}
+    reactionsMap[msgId].push({message_id:msgId,user_id:ME.id,emoji,chat_id:chatId});
   }
-  Z.rm();
+  Z.rm(); // Show immediately
+
+  // Then sync to Supabase
+  try{
+    if(alreadyThis){
+      await sb.from('message_reactions').delete().eq('message_id',msgId).eq('user_id',ME.id).eq('emoji',emoji);
+    } else {
+      await sb.from('message_reactions').upsert({message_id:msgId,user_id:ME.id,emoji,chat_id:chatId},{onConflict:'message_id,user_id,emoji'});
+    }
+  }catch(e){
+    console.warn('Reaction sync error:',e.message);
+    // If table doesn't exist, still works locally
+  }
 }
 
 function showReactPicker(x, y, msgId){
