@@ -10,6 +10,21 @@ function applyTheme(t){
 (function(){
   try{ var t=localStorage.getItem('nvtg_theme')||'light'; applyTheme(t); }catch(e){}
 })();
+<script>
+(function(){
+  try{
+    var on=localStorage.getItem('nvtg_scale_on')==='1';
+    var sc=parseInt(localStorage.getItem('nvtg_scale')||'100');
+    if(on && sc && sc!==100){
+      document.documentElement.style.fontSize=(sc/100*16)+'px';
+      // zoom applied after body exists
+      document.addEventListener('DOMContentLoaded',function(){
+        document.body.style.zoom=sc/100;
+      });
+    }
+  }catch(e){}
+})();
+</script>
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,interactive-widget=resizes-content">
@@ -461,21 +476,16 @@ html.dark #toast { background: rgba(30,34,53,.95) !important; border: 1px solid 
         <div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
         <span>Избранное</span>
       </div>
-      <div class="si" onclick="location.href='nvtg-chats.html#notif'">
-        <div class="sic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </div>
-        <span>Уведомления</span>
+      <div class="si" onclick="openNotifs2()">
+        <div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <span>Уведомления<span id="notif-badge2" style="background:#1e50ff;color:#fff;font-size:.6rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 4px;margin-left:6px;display:none;align-items:center;justify-content:center;vertical-align:middle">0</span></span>
       </div>
       <div class="si act">
         <div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
         <span>Настройки</span>
       </div>
       <div class="sbsep"></div>
-      <div class="si red" onclick="go('nvtg.html')">
+      <div class="si red" onclick="doLogout()">
         <div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></div>
         <span>Выйти</span>
       </div>
@@ -590,6 +600,7 @@ Q('sb').addEventListener('touchend', e=>{ if(_tx-e.changedTouches[0].clientX>60)
 
 // ── NAV ──
 function go(url){ location.href=url; }
+async function doLogout(){await sb2.auth.signOut();location.href='nvtg-index.html';}
 
 // ── RENDER USER ──
 function renderUser(name, user, av){
@@ -736,60 +747,57 @@ window.addEventListener('DOMContentLoaded', ()=>{
     <div id="notif-list2" style="flex:1;overflow-y:auto;padding:4px 0"></div>
   </div>
 </div>
+
 <script>
-const _SB2_URL='https://eolvegtnfebxhbhxuzwx.supabase.co';
-const _SB2_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbHZlZ3RuZmVieGhiaHh1end4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDk4NTQsImV4cCI6MjA4OTU4NTg1NH0.5NKUEc2h9s4_vsLpK_wlxiCBqC2OJucgBix8dmFbC3E';
 async function openNotifs2(){
   document.getElementById('notifov2').style.display='flex';
   const list=document.getElementById('notif-list2');
-  list.innerHTML='<div style="padding:20px;text-align:center;color:var(--m,#7a87ac)">Загрузка...</div>';
+  list.innerHTML='<div style="padding:20px;text-align:center;color:#7a87ac">Загрузка...</div>';
   try{
-    const sb2=supabase.createClient(_SB2_URL,_SB2_KEY);
-    const {data:{user}}=await sb2.auth.getUser();
-    if(!user){list.innerHTML='<div style="padding:40px;text-align:center;color:var(--m,#7a87ac)">Войдите в аккаунт</div>';return;}
-    const {data:reqs}=await sb2.from('friendships')
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user){list.innerHTML='<div style="padding:40px;text-align:center;color:#7a87ac">Войдите в аккаунт</div>';return;}
+    const {data:reqs}=await sb.from('friendships')
       .select('id,requester_id').eq('addressee_id',user.id).eq('status','pending').order('created_at',{ascending:false});
     list.innerHTML='';
     if(!reqs||!reqs.length){
-      list.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--m,#7a87ac);font-size:.88rem">Нет новых уведомлений 🎉</div>';
+      list.innerHTML='<div style="padding:40px 20px;text-align:center;color:#7a87ac;font-size:.88rem">Нет новых уведомлений 🎉</div>';
       return;
     }
-    const {data:ps}=await sb2.from('profiles').select('id,full_name,username,avatar_url').in('id',reqs.map(r=>r.requester_id));
+    const {data:ps}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',reqs.map(r=>r.requester_id));
     const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
     reqs.forEach(req=>{
       const p=(ps||[]).find(x=>x.id===req.requester_id);if(!p)return;
       const gi=p.id.charCodeAt(0)%GRADS.length;
       const item=document.createElement('div');
-      item.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 18px';
+      item.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(0,0,0,.06)';
       const av=document.createElement('div');
-      av.style.cssText='width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,'+GRADS[gi][0]+','+GRADS[gi][1]+');display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-size:.9rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden';
-      if(p.avatar_url){const im=document.createElement('img');im.src=p.avatar_url;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';av.appendChild(im);}
+      av.style.cssText='width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,'+GRADS[gi][0]+','+GRADS[gi][1]+');display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-size:.95rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden';
+      if(p.avatar_url){const im=document.createElement('img');im.src=p.avatar_url;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';im.onerror=()=>{av.innerHTML='';av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();};av.appendChild(im);}
       else av.textContent=(p.full_name||p.username||'?')[0].toUpperCase();
-      const body=document.createElement('div');body.style.flex='1;min-width:0';
+      const body=document.createElement('div');body.style.cssText='flex:1;min-width:0';
       const uname=(p.username||'').replace(/^@/,'');
-      body.innerHTML='<div style="font-size:.88rem;font-weight:600;color:var(--n,#0b1535)"><span style="color:#4d8bff">'+(p.full_name||uname)+'</span> хочет добавить тебя в друзья</div><div style="font-size:.72rem;color:var(--m,#7a87ac);margin-top:2px">@'+uname+'</div>';
-      const btns=document.createElement('div');btns.style.cssText='display:flex;gap:6px;flex-shrink:0';
-      const acc=document.createElement('button');acc.textContent='Принять';acc.style.cssText='background:#1e50ff;color:#fff;border:none;border-radius:8px;padding:6px 14px;font:600 .8rem Manrope,sans-serif;cursor:pointer;transition:background .15s';
-      acc.onmouseover=()=>acc.style.background='#3d6bff';acc.onmouseout=()=>acc.style.background='#1e50ff';
-      acc.onclick=async()=>{await sb2.from('friendships').update({status:'accepted'}).eq('id',req.id);acc.textContent='✓ Принято';acc.disabled=true;dec.disabled=true;item.style.opacity='.6';};
-      const dec=document.createElement('button');dec.textContent='Отклонить';dec.style.cssText='background:transparent;color:#7a87ac;border:1.5px solid #dde3f5;border-radius:8px;padding:6px 14px;font:600 .8rem Manrope,sans-serif;cursor:pointer';
-      dec.onclick=async()=>{await sb2.from('friendships').delete().eq('id',req.id);item.remove();};
+      body.innerHTML='<div style="font-size:.9rem;font-weight:700;color:var(--n,#0b1535)"><span style="color:#4d8bff">'+(p.full_name||uname)+'</span> хочет добавить тебя в друзья</div><div style="font-size:.75rem;color:#7a87ac;margin-top:2px">@'+uname+'</div>';
+      const btns=document.createElement('div');btns.style.cssText='display:flex;gap:6px;flex-shrink:0;margin-left:6px';
+      const acc=document.createElement('button');acc.textContent='Принять';acc.style.cssText='background:#1e50ff;color:#fff;border:none;border-radius:8px;padding:7px 14px;font:600 .8rem Manrope,sans-serif;cursor:pointer;white-space:nowrap';
+      acc.onclick=async()=>{await sb.from('friendships').update({status:'accepted'}).eq('id',req.id);acc.textContent='✓';acc.disabled=true;dec.disabled=true;item.style.opacity='.5';};
+      const dec=document.createElement('button');dec.textContent='Откл.';dec.style.cssText='background:transparent;color:#7a87ac;border:1.5px solid #dde3f5;border-radius:8px;padding:7px 12px;font:600 .8rem Manrope,sans-serif;cursor:pointer;white-space:nowrap';
+      dec.onclick=async()=>{await sb.from('friendships').delete().eq('id',req.id);item.remove();};
       btns.append(acc,dec);item.append(av,body,btns);list.appendChild(item);
     });
-  }catch(e){list.innerHTML='<div style="padding:20px;text-align:center;color:#7a87ac">Ошибка: '+e.message+'</div>';}
+    const b=document.getElementById('notif-badge2');if(b){b.textContent=reqs.length;b.style.display='inline-flex';}
+  }catch(e){list.innerHTML='<div style="padding:20px;text-align:center;color:#ff4d6a">Ошибка: '+e.message+'</div>';}
 }
 function closeNotifs2(){document.getElementById('notifov2').style.display='none';}
 async function checkNotifBadge2(){
   try{
-    const sb2=supabase.createClient(_SB2_URL,_SB2_KEY);
-    const {data:{user}}=await sb2.auth.getUser();if(!user)return;
-    const {data:reqs}=await sb2.from('friendships').select('id').eq('addressee_id',user.id).eq('status','pending');
+    const {data:{user}}=await sb.auth.getUser();if(!user)return;
+    const {data:reqs}=await sb.from('friendships').select('id').eq('addressee_id',user.id).eq('status','pending');
     const cnt=reqs?.length||0;
     const b=document.getElementById('notif-badge2');
     if(b){b.textContent=cnt;b.style.display=cnt?'inline-flex':'none';}
   }catch(e){}
 }
-window.addEventListener('DOMContentLoaded',()=>setTimeout(checkNotifBadge2,800));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(checkNotifBadge2,1000));
 </script>
 </body>
 </html>
