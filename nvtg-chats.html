@@ -2055,9 +2055,9 @@ function showReactPicker(x, y, msgId){
   p.style.left = left + 'px';
   p.style.top = top + 'px';
 }
-function hideReactPicker(){ document.getElementById('rpick').classList.remove('on'); _reactMsgId=null; }
+function hideReactPicker(){ _reactMsgId=null; }
 function pickReact(emoji){ hideReactPicker(); if(_reactMsgId) toggleReact(_reactMsgId, emoji); }
-document.addEventListener('click', e=>{ if(!document.getElementById('rpick').contains(e.target)) hideReactPicker(); });
+// rpick removed — reactions now in ctx menu
 
 // Build reactions bar for a message
 function buildReactBar(msgId){
