@@ -2,12 +2,14 @@
 <html lang="ru">
 <head>
 <script>
-// ── DARK THEME ──
+// NVTG Theme
 function applyTheme(t){
-  document.documentElement.classList.toggle('dark',t==='dark');
-  try{localStorage.setItem('nvtg_theme',t);}catch(e){}
+  document.documentElement.classList.toggle('dark', t==='dark');
+  try{ localStorage.setItem('nvtg_theme', t); }catch(e){}
 }
-(function(){try{const t=localStorage.getItem('nvtg_theme')||'light';applyTheme(t);}catch(e){}})();
+(function(){
+  try{ var t=localStorage.getItem('nvtg_theme')||'light'; applyTheme(t); }catch(e){}
+})();
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
@@ -410,70 +412,291 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
   #lbc-l,#lbc-r{display:flex}
 }
 
-/* ── DARK THEME ── */
-html.dark{color-scheme:dark}
-html.dark body{background:#0f1117!important;color:#e8eaf6!important}
-html.dark #pl,html.dark #ch,html.dark #ia,html.dark .lh{background:#1a1d27!important;border-color:#2a2d3e!important}
-html.dark #pc{background:#0f1117!important}
-html.dark .ci{background:transparent!important}
-html.dark .ci:hover{background:rgba(255,255,255,.05)!important}
-html.dark .ci.act{background:rgba(30,80,255,.18)!important}
-html.dark .mr.in .mb{background:#1e2332!important;color:#e8eaf6!important}
-html.dark .mr.out .mb{background:#1e3a5f!important;color:#d0e8ff!important}
-html.dark .iw{background:#1e2332!important;border-color:#2a2d3e!important}
-html.dark .iw textarea{color:#e8eaf6!important}
-html.dark .iw textarea::placeholder{color:#6b7a99!important}
-html.dark .cn,html.dark .fnm{color:#e8eaf6!important}
-html.dark .cm,html.dark .chs,html.dark .ctime,html.dark .muted{color:#6b7a99!important}
-html.dark .lt{color:#e8eaf6!important}
-html.dark .dchip{background:rgba(20,25,50,.9)!important;color:#6b7a99!important}
-html.dark .ls input,html.dark #csinp,html.dark #lsinp{background:#1e2332!important;border-color:#2a2d3e!important;color:#e8eaf6!important}
-html.dark #ctx,html.dark #hm,html.dark #clmenu{background:#1e2332!important;border-color:#2a2d3e!important}
-html.dark .cxi:hover,html.dark .hmi:hover,html.dark .clmi:hover{background:rgba(255,255,255,.05)!important}
-html.dark .cxi span,html.dark .hmi span,html.dark .clmi span{color:#e8eaf6!important}
-html.dark .cxs,html.dark .cxi+.cxi,.hmi+.hmi{border-color:#2a2d3e!important}
-html.dark .ctx-react{background:#252838!important;border-color:#2a2d3e!important}
-html.dark .snd{background:#1e3a5f!important}
-html.dark .abt{color:#6b7a99!important}
-html.dark #notifbox,html.dark #creatorbox,html.dark #frbox{background:#1a1d27!important}
-html.dark .nb-hdr,html.dark .frbox-hdr,html.dark .cr-hdr{border-color:#2a2d3e!important}
-html.dark .nb-ttl,html.dark .frbox-ttl,html.dark .cr-name,html.dark .ni-txt{color:#e8eaf6!important}
-html.dark .ni-dec{background:#252838!important;border-color:#2a2d3e!important;color:#6b7a99!important}
-html.dark .notif-item.unread{background:rgba(30,80,255,.08)!important}
-html.dark .cr-body{color:#c8ccdc!important;background:#1a1d27!important}
-html.dark #upbox{background:#1a1d27!important}
-html.dark #up-name,html.dark #up-user{color:#e8eaf6!important}
-html.dark .dlg{background:#1e2332!important}
-html.dark .dlg h4{color:#e8eaf6!important}
-html.dark .db.c{background:#252838!important;color:#6b7a99!important}
-html.dark .do{background:rgba(0,0,0,.7)!important}
-/* profile/settings */
-html.dark .hero,html.dark .card,html.dark .uhero,html.dark .pscr,html.dark #pr,html.dark #main{background:#1a1d27!important}
-html.dark body{background:#0f1117!important}
-html.dark .top{background:#1a1d27!important;border-color:#2a2d3e!important}
-html.dark .tttl,html.dark .hn,html.dark .rl,.dark .unm{color:#e8eaf6!important}
-html.dark .rl{color:#e8eaf6!important}
-html.dark .rv{color:#4d8bff!important}
-html.dark .rls,html.dark .ust,html.dark .hu,html.dark .uus{color:#6b7a99!important}
-html.dark .row:hover,html.dark .bio-row:hover{background:rgba(255,255,255,.04)!important}
-html.dark .row::before{background:#2a2d3e!important}
-html.dark .friends-sep{background:#2a2d3e!important}
-html.dark .friend-item:hover{background:rgba(255,255,255,.04)!important}
-html.dark .friends-empty{color:#6b7a99!important}
-html.dark input[type=text],html.dark input[type=password],html.dark textarea{background:#1e2332!important;color:#e8eaf6!important;border-color:#2a2d3e!important}
-html.dark .ef input,html.dark .ef textarea{border-color:#2a2d3e!important;color:#e8eaf6!important}
-html.dark .scale-track{background:#2a2d3e!important}
-html.dark .scale-thumb{background:#4d8bff!important;border-color:#1a1d27!important}
-html.dark .scale-fill{background:#4d8bff!important}
-html.dark .tab{color:#6b7a99!important}
-html.dark .tab.act{background:#252838!important;color:#fff!important}
-html.dark .tabs{background:rgba(255,255,255,.06)!important}
-html.dark input[type=text],html.dark input[type=password]{background:#1e2332!important}
-html.dark .btn{background:#252838!important;color:#e8eaf6!important}
-html.dark .btn.blue{background:#1e50ff!important;color:#fff!important}
-html.dark body::before{opacity:.3!important}
-html.dark .wrap .card{background:#1a1d27!important;border-color:#2a2d3e!important}
-html.dark .slbl{color:#6b7a99!important}
+/* ═══════════════════════════════════════
+   NVTG DARK THEME — Beautiful & Clean
+   ═══════════════════════════════════════ */
+html.dark {
+  --bg: #111318;
+  --bg2: #1a1d26;
+  --bg3: #21253a;
+  --card: #1e2235;
+  --border: #2a2e45;
+  --text: #e2e6f3;
+  --text2: #8b92b0;
+  --blue: #4a7fff;
+  --blue2: #6b9bff;
+  --sent-bg: #1c2f50;
+  --recv-bg: #1e2235;
+  --navy: #e2e6f3;
+  --ok: #3dd68c;
+  color-scheme: dark;
+}
+
+/* Base */
+html.dark body { background: var(--bg) !important; color: var(--text) !important; }
+html.dark body::before { background-image: radial-gradient(rgba(74,127,255,.06) 1.2px, transparent 1.2px) !important; }
+
+/* ── CHAT LIST PANEL ── */
+html.dark #pl { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .lh { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .lt { color: var(--text) !important; }
+html.dark .lt span { color: var(--blue) !important; }
+html.dark .ib { color: var(--text2) !important; }
+html.dark .ib:hover { color: var(--text) !important; }
+html.dark .bur span { background: var(--text2) !important; }
+
+/* Chat items */
+html.dark .ci { background: transparent !important; }
+html.dark .ci:hover { background: rgba(255,255,255,.04) !important; }
+html.dark .ci.act { background: rgba(74,127,255,.18) !important; }
+html.dark .cn { color: var(--text) !important; }
+html.dark .cm { color: var(--text2) !important; }
+html.dark .ctime { color: var(--text2) !important; }
+html.dark .llbl { color: var(--text2) !important; }
+
+/* Search */
+html.dark .ls { border-color: var(--border) !important; }
+html.dark .ls input, html.dark #lsinp { background: var(--bg3) !important; border-color: var(--border) !important; color: var(--text) !important; }
+html.dark .ls input::placeholder { color: var(--text2) !important; }
+
+/* ── CHAT AREA ── */
+html.dark #pc { background: var(--bg) !important; background-image: radial-gradient(rgba(74,127,255,.04) 1px, transparent 1px) !important; background-size: 22px 22px !important; }
+html.dark #ch { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .chn { color: var(--text) !important; }
+html.dark .chs { color: var(--text2) !important; }
+html.dark .chs.on { color: var(--ok) !important; }
+
+/* Messages */
+html.dark .mr.out .mb { background: var(--sent-bg) !important; color: #c8deff !important; }
+html.dark .mr.in .mb { background: var(--recv-bg) !important; color: var(--text) !important; }
+html.dark .mmeta .mt { color: var(--text2) !important; }
+html.dark .dchip { background: rgba(30,34,53,.95) !important; color: var(--text2) !important; }
+html.dark .mtext { color: inherit !important; }
+html.dark .redbadge { color: var(--text2) !important; }
+
+/* Reply preview */
+html.dark .rp { background: rgba(74,127,255,.1) !important; border-color: var(--blue) !important; }
+html.dark .rn { color: var(--blue) !important; }
+html.dark .rt { color: var(--text2) !important; }
+
+/* Input area */
+html.dark #ia { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .iw { background: var(--bg3) !important; border-color: var(--border) !important; }
+html.dark .iw:focus-within { background: var(--bg3) !important; border-color: var(--blue) !important; }
+html.dark .iw textarea { color: var(--text) !important; }
+html.dark .iw textarea::placeholder { color: var(--text2) !important; }
+html.dark .abt { color: var(--text2) !important; }
+html.dark .abt:hover { color: var(--text) !important; }
+html.dark .snd { background: var(--blue) !important; }
+html.dark .snd:hover { background: var(--blue2) !important; }
+html.dark .snd:disabled { background: var(--bg3) !important; }
+
+/* Strip (reply/edit bar) */
+html.dark #strip { border-color: var(--border) !important; }
+html.dark .sttx { color: var(--text2) !important; }
+
+/* Photo preview */
+html.dark .ppitem { border-color: var(--blue) !important; }
+html.dark .addp { border-color: var(--border) !important; color: var(--text2) !important; }
+
+/* ── CONTEXT MENU ── */
+html.dark #ctx, html.dark #hm, html.dark #clmenu {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5) !important;
+}
+html.dark .cxi { border-color: var(--border) !important; }
+html.dark .cxi:hover { background: rgba(255,255,255,.05) !important; }
+html.dark .cxi span { color: var(--text) !important; }
+html.dark .cxi svg { color: var(--text2) !important; }
+html.dark .cxi.red span { color: #ff4d6a !important; }
+html.dark .cxi.red svg { color: #ff4d6a !important; }
+html.dark .cxs { background: var(--border) !important; }
+html.dark .hmi:hover { background: rgba(255,255,255,.05) !important; }
+html.dark .hmi span { color: var(--text) !important; }
+html.dark .hmi.red span { color: #ff4d6a !important; }
+html.dark .ctx-react { background: var(--bg3) !important; border-color: var(--border) !important; }
+
+/* Reactions */
+html.dark .rbub { background: rgba(255,255,255,.07) !important; border-color: rgba(255,255,255,.1) !important; }
+html.dark .rbub.mine { background: rgba(74,127,255,.2) !important; border-color: var(--blue) !important; }
+html.dark .rbub .rcnt { color: var(--text) !important; }
+
+/* Emoji picker */
+html.dark #emj { background: var(--card) !important; border-color: var(--border) !important; }
+html.dark .ej:hover { background: var(--bg3) !important; }
+
+/* ── DIALOGS ── */
+html.dark .do { background: rgba(0,0,0,.75) !important; }
+html.dark .dlg { background: var(--card) !important; border: 1px solid var(--border) !important; }
+html.dark .dlg h4 { color: var(--text) !important; }
+html.dark .dck span { color: var(--text2) !important; }
+html.dark .db.c { background: var(--bg3) !important; color: var(--text2) !important; }
+html.dark .db.c:hover { background: var(--border) !important; }
+html.dark .db.p { background: var(--blue) !important; }
+html.dark .db.d { background: #ff4d6a !important; }
+
+/* ── NOTIFICATIONS / MODALS ── */
+html.dark #notifov, html.dark #creatorov, html.dark #frov, html.dark #upov {
+  background: rgba(0,0,0,.75) !important;
+}
+html.dark #notifbox, html.dark #creatorbox, html.dark #frbox, html.dark #upbox {
+  background: var(--card) !important;
+}
+html.dark .nb-hdr, html.dark .frbox-hdr, html.dark .cr-hdr { border-color: var(--border) !important; }
+html.dark .nb-ttl, html.dark .frbox-ttl, html.dark .cr-name { color: var(--text) !important; }
+html.dark .nb-cl, html.dark .frbox-cl { color: var(--text2) !important; }
+html.dark .nb-empty, html.dark .friends-empty { color: var(--text2) !important; }
+html.dark .notif-item:hover { background: rgba(255,255,255,.04) !important; }
+html.dark .notif-item.unread { background: rgba(74,127,255,.08) !important; }
+html.dark .ni-txt { color: var(--text) !important; }
+html.dark .ni-txt span { color: var(--blue) !important; }
+html.dark .ni-time { color: var(--text2) !important; }
+html.dark .ni-dec { background: var(--bg3) !important; border-color: var(--border) !important; color: var(--text2) !important; }
+html.dark .cr-body { background: var(--card) !important; color: var(--text2) !important; }
+html.dark .cr-body a { color: var(--blue) !important; }
+
+/* User profile modal */
+html.dark #up-name { color: var(--text) !important; }
+html.dark #up-user { color: var(--blue) !important; }
+html.dark #up-status { color: var(--text2) !important; }
+html.dark #up-bio { color: var(--text2) !important; }
+html.dark #upbox > div:last-child { border-color: var(--border) !important; }
+html.dark #up-msg-btn span, html.dark #up-friend-btn span { color: var(--text) !important; }
+html.dark #up-msg-btn:hover, html.dark #up-friend-btn:hover { background: rgba(255,255,255,.05) !important; }
+html.dark #up-friends-row { color: var(--text2) !important; }
+html.dark #up-private-notice { background: var(--bg3) !important; color: var(--text2) !important; }
+
+/* Pinned bar */
+html.dark #pinbar { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .pinm { color: var(--text2) !important; }
+
+/* Chat search */
+html.dark #csbar { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark #csinp { background: var(--bg3) !important; border-color: var(--border) !important; color: var(--text) !important; }
+html.dark #cscount { color: var(--text2) !important; }
+
+/* Typing indicator */
+html.dark .typing-dots span { background: var(--text2) !important; }
+html.dark .typing-text { color: var(--text2) !important; }
+
+/* No chat selected */
+html.dark #nc p { color: var(--text2) !important; }
+html.dark #nc svg { color: var(--text2) !important; }
+html.dark .es p { color: var(--text2) !important; }
+
+/* ── DRAWER / SIDEBAR ── */
+html.dark #drw, html.dark #sb { background: #13162a !important; }
+
+/* ── PROFILE PAGE ── */
+html.dark #pr, html.dark .pscr { background: var(--bg) !important; }
+html.dark .top { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .tttl { color: var(--text) !important; }
+html.dark .hero { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .hn { color: var(--text) !important; }
+html.dark .hu { color: var(--blue) !important; }
+html.dark .hs { color: var(--ok) !important; }
+html.dark .card { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .slbl { color: var(--text2) !important; }
+html.dark .row { background: transparent !important; }
+html.dark .row:hover { background: rgba(255,255,255,.04) !important; }
+html.dark .row::before { background: var(--border) !important; }
+html.dark .rl { color: var(--text) !important; }
+html.dark .rv { color: var(--blue) !important; }
+html.dark .rv.b { color: var(--blue) !important; }
+html.dark .ra { color: var(--blue) !important; }
+html.dark .ric { background: var(--bg3) !important; }
+html.dark .ric svg { color: var(--text2) !important; }
+html.dark .bio-row:hover { background: rgba(255,255,255,.04) !important; }
+html.dark .bio-txt { color: var(--text) !important; }
+html.dark .bio-ph { color: var(--text2) !important; }
+html.dark .hint { color: var(--text2) !important; }
+html.dark .friends-header { background: transparent !important; }
+html.dark .friends-title { color: var(--text2) !important; }
+html.dark .friends-count { color: var(--blue) !important; }
+html.dark .friends-sep { background: var(--border) !important; }
+html.dark .friend-item:hover { background: rgba(255,255,255,.04) !important; }
+html.dark .fnm { color: var(--text) !important; }
+html.dark .fus { color: var(--blue) !important; }
+html.dark .fremove { border-color: var(--border) !important; color: var(--text2) !important; }
+html.dark .friends-empty { color: var(--text2) !important; }
+
+/* Edit modal */
+html.dark #eov { background: rgba(0,0,0,.7) !important; }
+html.dark #ebox { background: var(--card) !important; }
+html.dark .etl { color: var(--text) !important; }
+html.dark .ef label { color: var(--text2) !important; }
+html.dark .ef input, html.dark .ef textarea { color: var(--text) !important; border-color: var(--border) !important; }
+html.dark .ef input:focus, html.dark .ef textarea:focus { border-color: var(--blue) !important; }
+html.dark .brem { color: var(--text2) !important; }
+html.dark .db.c { background: var(--bg3) !important; color: var(--text2) !important; }
+html.dark .db.s { background: var(--blue) !important; }
+
+/* Crop modal */
+html.dark #cov { background: rgba(0,0,0,.8) !important; }
+html.dark #cbox { background: var(--card) !important; }
+html.dark #cbox h3 { color: var(--text) !important; }
+html.dark .cctrl label { color: var(--text2) !important; }
+
+/* ── SETTINGS PAGE ── */
+html.dark #main { background: var(--bg) !important; }
+html.dark .uhero { background: var(--bg2) !important; border-color: var(--border) !important; }
+html.dark .uhero:hover { background: rgba(255,255,255,.03) !important; }
+html.dark .unm { color: var(--text) !important; }
+html.dark .uus { color: var(--blue) !important; }
+html.dark .ust { color: var(--text2) !important; }
+html.dark .uav { color: #fff !important; }
+html.dark .uarr svg { color: var(--text2) !important; }
+html.dark .rlt { color: var(--text) !important; }
+html.dark .rls { color: var(--text2) !important; }
+html.dark .scale-row { background: transparent !important; }
+html.dark .scale-lbl { color: var(--text) !important; }
+html.dark .scale-val { color: var(--blue) !important; }
+html.dark .scale-track { background: var(--bg3) !important; }
+html.dark .scale-fill { background: var(--blue) !important; }
+html.dark .scale-thumb { background: var(--blue) !important; border-color: var(--bg2) !important; box-shadow: 0 1px 8px rgba(74,127,255,.4) !important; }
+html.dark .scale-marks span { color: var(--text2) !important; }
+html.dark .scale-row button { background: var(--blue) !important; }
+html.dark .tslider { background: var(--bg3) !important; }
+
+/* ── LOGIN / REGISTER PAGE ── */
+html.dark .wrap .card { background: var(--card) !important; border-color: var(--border) !important; }
+html.dark .tabs { background: rgba(255,255,255,.06) !important; }
+html.dark .tab { color: var(--text2) !important; }
+html.dark .tab.act { background: var(--bg3) !important; color: var(--text) !important; }
+html.dark input[type=text], html.dark input[type=password] { background: var(--bg3) !important; border-color: var(--border) !important; color: var(--text) !important; }
+html.dark input[type=text]:focus, html.dark input[type=password]:focus { border-color: var(--blue) !important; background: var(--bg2) !important; }
+html.dark input::placeholder { color: var(--text2) !important; }
+html.dark label { color: var(--text2) !important; }
+html.dark .il { color: var(--text2) !important; }
+html.dark .hint { color: var(--text2) !important; }
+html.dark .btn { background: var(--bg3) !important; color: var(--text) !important; }
+html.dark .btn:hover { background: var(--border) !important; }
+html.dark .btn.blue { background: var(--blue) !important; color: #fff !important; }
+html.dark .btn.blue:hover { background: var(--blue2) !important; }
+html.dark .btn:disabled { background: var(--bg3) !important; color: var(--text2) !important; }
+html.dark .btn-back { background: var(--bg3) !important; color: var(--text2) !important; border-color: var(--border) !important; }
+html.dark .bar span { background: var(--border) !important; }
+html.dark .logo-name { color: var(--text) !important; }
+html.dark .logo-mark { opacity: .9 !important; }
+html.dark #last-acc { border-color: var(--border) !important; background: var(--card) !important; }
+html.dark #last-acc > div:first-child { color: var(--text2) !important; }
+
+/* Scroll bars */
+html.dark ::-webkit-scrollbar { width: 4px; }
+html.dark ::-webkit-scrollbar-track { background: transparent; }
+html.dark ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Photo grid */
+html.dark .pg { box-shadow: 0 1px 8px rgba(0,0,0,.5) !important; }
+html.dark .pi:not(:first-child) img { filter: brightness(.75) !important; }
+html.dark .pi:hover img { filter: brightness(.9) !important; }
+
+/* Lightbox */
+html.dark #lb { background: rgba(0,0,0,.97) !important; }
+
+/* Toast */
+html.dark #toast { background: rgba(30,34,53,.95) !important; border: 1px solid var(--border); }
 
 </style>
 </head>
@@ -803,6 +1026,11 @@ async function loadProfile(){
       if(ME.avatar) LS.set('nvtg_av',ME.avatar);
     }
     startPresence();
+    // Open notifications if redirected from other page
+    if(location.hash==='#notif'){
+      history.replaceState(null,'',location.pathname);
+      setTimeout(()=>openNotifs(),800);
+    }
     // Remove creator letter if already read
     if(LS.get('nvtg_creator_read')==='1'){
       CHATS=CHATS.filter(c=>c.id!=='creator');
