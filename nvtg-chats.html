@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script>
+// ── DARK THEME ──
+function applyTheme(t){
+  document.documentElement.classList.toggle('dark',t==='dark');
+  try{localStorage.setItem('nvtg_theme',t);}catch(e){}
+}
+(function(){try{const t=localStorage.getItem('nvtg_theme')||'light';applyTheme(t);}catch(e){}})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
 <title>NVTG — Чаты</title>
@@ -401,6 +409,72 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 @media(min-width:701px){
   #lbc-l,#lbc-r{display:flex}
 }
+
+/* ── DARK THEME ── */
+html.dark{color-scheme:dark}
+html.dark body{background:#0f1117!important;color:#e8eaf6!important}
+html.dark #pl,html.dark #ch,html.dark #ia,html.dark .lh{background:#1a1d27!important;border-color:#2a2d3e!important}
+html.dark #pc{background:#0f1117!important}
+html.dark .ci{background:transparent!important}
+html.dark .ci:hover{background:rgba(255,255,255,.05)!important}
+html.dark .ci.act{background:rgba(30,80,255,.18)!important}
+html.dark .mr.in .mb{background:#1e2332!important;color:#e8eaf6!important}
+html.dark .mr.out .mb{background:#1e3a5f!important;color:#d0e8ff!important}
+html.dark .iw{background:#1e2332!important;border-color:#2a2d3e!important}
+html.dark .iw textarea{color:#e8eaf6!important}
+html.dark .iw textarea::placeholder{color:#6b7a99!important}
+html.dark .cn,html.dark .fnm{color:#e8eaf6!important}
+html.dark .cm,html.dark .chs,html.dark .ctime,html.dark .muted{color:#6b7a99!important}
+html.dark .lt{color:#e8eaf6!important}
+html.dark .dchip{background:rgba(20,25,50,.9)!important;color:#6b7a99!important}
+html.dark .ls input,html.dark #csinp,html.dark #lsinp{background:#1e2332!important;border-color:#2a2d3e!important;color:#e8eaf6!important}
+html.dark #ctx,html.dark #hm,html.dark #clmenu{background:#1e2332!important;border-color:#2a2d3e!important}
+html.dark .cxi:hover,html.dark .hmi:hover,html.dark .clmi:hover{background:rgba(255,255,255,.05)!important}
+html.dark .cxi span,html.dark .hmi span,html.dark .clmi span{color:#e8eaf6!important}
+html.dark .cxs,html.dark .cxi+.cxi,.hmi+.hmi{border-color:#2a2d3e!important}
+html.dark .ctx-react{background:#252838!important;border-color:#2a2d3e!important}
+html.dark .snd{background:#1e3a5f!important}
+html.dark .abt{color:#6b7a99!important}
+html.dark #notifbox,html.dark #creatorbox,html.dark #frbox{background:#1a1d27!important}
+html.dark .nb-hdr,html.dark .frbox-hdr,html.dark .cr-hdr{border-color:#2a2d3e!important}
+html.dark .nb-ttl,html.dark .frbox-ttl,html.dark .cr-name,html.dark .ni-txt{color:#e8eaf6!important}
+html.dark .ni-dec{background:#252838!important;border-color:#2a2d3e!important;color:#6b7a99!important}
+html.dark .notif-item.unread{background:rgba(30,80,255,.08)!important}
+html.dark .cr-body{color:#c8ccdc!important;background:#1a1d27!important}
+html.dark #upbox{background:#1a1d27!important}
+html.dark #up-name,html.dark #up-user{color:#e8eaf6!important}
+html.dark .dlg{background:#1e2332!important}
+html.dark .dlg h4{color:#e8eaf6!important}
+html.dark .db.c{background:#252838!important;color:#6b7a99!important}
+html.dark .do{background:rgba(0,0,0,.7)!important}
+/* profile/settings */
+html.dark .hero,html.dark .card,html.dark .uhero,html.dark .pscr,html.dark #pr,html.dark #main{background:#1a1d27!important}
+html.dark body{background:#0f1117!important}
+html.dark .top{background:#1a1d27!important;border-color:#2a2d3e!important}
+html.dark .tttl,html.dark .hn,html.dark .rl,.dark .unm{color:#e8eaf6!important}
+html.dark .rl{color:#e8eaf6!important}
+html.dark .rv{color:#4d8bff!important}
+html.dark .rls,html.dark .ust,html.dark .hu,html.dark .uus{color:#6b7a99!important}
+html.dark .row:hover,html.dark .bio-row:hover{background:rgba(255,255,255,.04)!important}
+html.dark .row::before{background:#2a2d3e!important}
+html.dark .friends-sep{background:#2a2d3e!important}
+html.dark .friend-item:hover{background:rgba(255,255,255,.04)!important}
+html.dark .friends-empty{color:#6b7a99!important}
+html.dark input[type=text],html.dark input[type=password],html.dark textarea{background:#1e2332!important;color:#e8eaf6!important;border-color:#2a2d3e!important}
+html.dark .ef input,html.dark .ef textarea{border-color:#2a2d3e!important;color:#e8eaf6!important}
+html.dark .scale-track{background:#2a2d3e!important}
+html.dark .scale-thumb{background:#4d8bff!important;border-color:#1a1d27!important}
+html.dark .scale-fill{background:#4d8bff!important}
+html.dark .tab{color:#6b7a99!important}
+html.dark .tab.act{background:#252838!important;color:#fff!important}
+html.dark .tabs{background:rgba(255,255,255,.06)!important}
+html.dark input[type=text],html.dark input[type=password]{background:#1e2332!important}
+html.dark .btn{background:#252838!important;color:#e8eaf6!important}
+html.dark .btn.blue{background:#1e50ff!important;color:#fff!important}
+html.dark body::before{opacity:.3!important}
+html.dark .wrap .card{background:#1a1d27!important;border-color:#2a2d3e!important}
+html.dark .slbl{color:#6b7a99!important}
+
 </style>
 </head>
 <body>
@@ -416,7 +490,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     <div class="si act"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><span>Чаты</span></div>
     <div class="si" onclick="location.href='nvtg-profile.html'"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span>Мой профиль</span></div>
     <div class="si" onclick="Z.oc('fav');D.cd()"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div><span>Избранное</span></div>
-    <div class="si" onclick="openNotifs();D.cd()" id="drw-notif"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><span>Уведомления<span id="notif-badge" style="display:none;background:#1e50ff;color:#fff;font-size:.6rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 4px;margin-left:6px;display:inline-flex;align-items:center;justify-content:center">0</span></span></div>
+    <div class="si" onclick="openNotifs();D.cd()" id="drw-notif"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><span>Уведомления<span id="notif-badge" style="background:#1e50ff;color:#fff;font-size:.6rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 4px;margin-left:6px;display:none;align-items:center;justify-content:center;vertical-align:middle">0</span></span></div>
     <div class="si" onclick="location.href='nvtg-settings.html'"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div><span>Настройки</span></div>
     <div class="sbsep"></div>
     <div class="si red" onclick="doLogout()"><div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><span>Выйти</span></div>
@@ -553,7 +627,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     </div>
     <div style="border-top:1px solid #dde3f5;margin:0 16px"></div>
     <div style="padding:10px 16px 0;display:flex;flex-direction:column;gap:2px">
-      <div id="up-msg-btn" onclick="closeUP();Z.oc(window._upUid)" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-radius:12px;transition:background .12s" onmouseover="this.style.background='rgba(11,21,53,.04)'" onmouseout="this.style.background=''">
+      <div id="up-msg-btn" onclick="const uid=window._upUid;closeUP();setTimeout(()=>Z.oc(uid),50)" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-radius:12px;transition:background .12s" onmouseover="this.style.background='rgba(11,21,53,.04)'" onmouseout="this.style.background=''">
         <div style="width:36px;height:36px;border-radius:10px;background:#f0f3ff;display:flex;align-items:center;justify-content:center">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e50ff" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
@@ -1833,7 +1907,7 @@ async function checkNotifBadge(){
     const {data:reqs}=await sb.from('friendships').select('id').eq('addressee_id',ME.id).eq('status','pending');
     const badge=document.getElementById('notif-badge');
     const cnt=reqs?.length||0;
-    if(badge){badge.textContent=cnt;badge.style.display=cnt?'inline-flex':'none';}
+    if(badge){badge.textContent=cnt;badge.style.display=cnt?'inline-flex':'none';badge.style.visibility='visible';}
   }catch(e){}
 }
 
@@ -1921,8 +1995,16 @@ async function openUP(uid){
   if(!prof){ov.style.display='none';return;}
   const av=Q('up-av');
   av.style.background=`linear-gradient(135deg,${GRADS[gi][0]},${GRADS[gi][1]})`;
-  if(prof.avatar_url){const img=document.createElement('img');img.src=prof.avatar_url;img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';av.innerHTML='';av.appendChild(img);}
-  else{av.innerHTML='';av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();}
+  av.innerHTML='';
+  if(prof.avatar_url){
+    const img=document.createElement('img');
+    img.style.cssText='width:100%;height:100%;object-fit:cover;display:block;border-radius:50%';
+    img.onerror=()=>{av.innerHTML='';av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();};
+    img.src=prof.avatar_url;
+    av.appendChild(img);
+  } else {
+    av.textContent=(prof.full_name||prof.username||'?')[0].toUpperCase();
+  }
   // up-name + галочка
   Q('up-name').innerHTML='';
   Q('up-name').style.cssText='font-family:\'Syne\',sans-serif;font-size:1.2rem;font-weight:800;color:#0b1535;display:flex;align-items:center;justify-content:center;gap:4px';
