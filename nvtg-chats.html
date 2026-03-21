@@ -28,7 +28,7 @@ function applyTheme(t){
 })();
 </script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>NVTG — Чаты</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -426,21 +426,22 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 @media(max-width:700px){
   #pl{width:100%;border-right:none}
 
-  /* Chat panel: slides in, JS sets height via fixPCLayout() */
+  /* ── MOBILE CHAT PANEL ── */
   #pc{
     position:fixed;
+    /* inset:0 = fills entire screen, keyboard will shrink viewport on Android */
     top:0; left:0; right:0; bottom:0;
     z-index:50;
     transform:translateX(100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
     display:flex;
     flex-direction:column;
-    height:100dvh;
+    /* DO NOT set height — let inset:0 define it */
     overflow:hidden;
   }
   #pc.open{transform:translateX(0)}
 
-  /* Messages scroll area — takes all remaining space */
+  /* Messages wrap: flex:1 so it fills remaining space after header+input */
   #msgs-wrap{
     flex:1;
     min-height:0;
@@ -449,28 +450,26 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     display:flex;
     flex-direction:column;
   }
+  /* Messages list: scrollable, takes all space inside msgs-wrap */
   #msgs{
     flex:1;
     overflow-y:auto;
     min-height:0;
-    overscroll-behavior:contain;
+    overscroll-behavior-y:contain;
     position:relative;
     z-index:2;
     -webkit-overflow-scrolling:touch;
   }
-
-  /* Input area: always at bottom, never flies off screen */
+  /* Input bar: fixed to bottom, never moves */
   #ia{
     flex-shrink:0 !important;
-    position:relative;
-    z-index:20;
     width:100%;
     background:var(--wh);
     border-top:1px solid var(--brd);
-    -webkit-transform:translateZ(0);
-    transform:translateZ(0);
-    /* Bottom safe area for iOS home indicator */
-    padding-bottom:max(env(safe-area-inset-bottom,0px), 0px);
+    position:relative;
+    z-index:20;
+    /* iOS home indicator safe area */
+    padding-bottom:env(safe-area-inset-bottom,0px);
   }
 
   .back{display:flex}
@@ -806,7 +805,7 @@ html.dark #lscroll .ci { border-bottom-color: #1e2236; }
 /* msgs-wrap clips overflow so blur doesn't leak outside */
 #msgs-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 /* bg element is behind everything, slightly oversized to hide blur edges */
-#chat-bg { position: absolute; inset: -4px; background-size: cover; background-position: center; pointer-events: none; z-index: 0; transition: opacity .3s; display: none; }
+#chat-bg { position: absolute; inset: -4px; background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none; z-index: 0; display: none; will-change: transform; }
 /* messages above bg and overlay */
 #msgs { position: relative; z-index: 2; }
 /* bg modal CSS consolidated above */
@@ -2324,43 +2323,35 @@ function applyBgNow(){
   if(!el) return;
 
   if(!bgState.url){
-    // No background - hide the bg element
     el.style.display = 'none';
-    el.style.backgroundImage = 'none';
-    // Remove overlay
     const ov = document.getElementById('chat-bg-overlay');
     if(ov) ov.style.background = 'transparent';
     return;
   }
 
-  // Show background
+  // Show bg image
   el.style.display = 'block';
   el.style.backgroundImage = "url('" + bgState.url + "')";
-  el.style.backgroundSize = 'cover';
-  el.style.backgroundPosition = 'center';
 
-  // BLUR: apply filter directly to the bg element
-  // inset:-10px on #chat-bg (via CSS) hides the blur edges
+  // Blur — extend inset to hide blur edge artifacts
   if(bgState.blur){
-    el.style.filter = 'blur(10px)';
-    el.style.inset = '-15px'; // extra bleed to hide blur edges
+    el.style.filter = 'blur(12px)';
+    el.style.inset = '-24px';
   } else {
     el.style.filter = 'none';
-    el.style.inset = '-4px'; // small bleed just to fill
+    el.style.inset = '-2px';
   }
 
-  // Dark overlay — sits BETWEEN #chat-bg (z:0) and #msgs (z:2)
-  // It must NOT cover messages, just tint the background
-  let overlay = document.getElementById('chat-bg-overlay');
-  if(!overlay){
-    overlay = document.createElement('div');
-    overlay.id = 'chat-bg-overlay';
-    overlay.style.cssText = 'position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .3s';
+  // Dark overlay between bg (z:0) and messages (z:2) — never darkens messages
+  let ov = document.getElementById('chat-bg-overlay');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'chat-bg-overlay';
+    ov.style.cssText = 'position:absolute;inset:0;z-index:1;pointer-events:none;';
     const wrap = document.getElementById('msgs-wrap');
-    if(wrap) wrap.insertBefore(overlay, wrap.querySelector('#msgs'));
+    if(wrap) wrap.insertBefore(ov, el.nextSibling);
   }
-  // Only tint the bg, NOT the messages
-  overlay.style.background = bgState.dark ? 'rgba(0,0,0,' + (bgState.darkVal/100) + ')' : 'transparent';
+  ov.style.background = bgState.dark ? 'rgba(0,0,0,' + (bgState.darkVal/100) + ')' : 'transparent';
 }
 function openBgPicker(){
   Z.hhm(); // Close the header menu first
@@ -2745,39 +2736,49 @@ function applyBg(){
 // Per-chat background loaded when chat opens
 
 // ── MOBILE KEYBOARD FIX ──
-// Approach: set CSS variable --vh that updates with visualViewport
-// This works on iOS Safari, Android Chrome, with any zoom level
+// Strategy:
+//   Android Chrome: resizes the visual viewport → bottom:0 on fixed #pc auto-adjusts ✓
+//   iOS Safari: does NOT resize viewport, scrolls it instead
+//     → We listen to visualViewport.offsetTop and adjust #pc bottom only
+//     → NEVER change top or height (that causes bg/content to jump)
 (function(){
-  function setVH(){
-    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty('--real-vh', h + 'px');
-    document.documentElement.style.setProperty('--real-top', (window.visualViewport ? window.visualViewport.offsetTop : 0) + 'px');
+  if(!window.visualViewport) return;
+  var vv = window.visualViewport;
+  var lastBottom = 0;
+
+  function onVVChange(){
+    if(window.innerWidth > 700) return;
+    var pc = document.getElementById('pc');
+    if(!pc) return;
+
+    // How much the viewport has been pushed up (= keyboard height on iOS)
+    // offsetTop is how far the visual viewport has scrolled from the layout viewport
+    var kbHeight = window.innerHeight - vv.height - vv.offsetTop;
+    if(kbHeight < 0) kbHeight = 0;
+
+    // Set bottom on #pc to push the input bar up by keyboard height
+    // This does NOT move the background element (it's absolute inside #msgs-wrap)
+    if(Math.abs(kbHeight - lastBottom) > 2){
+      lastBottom = kbHeight;
+      pc.style.bottom = kbHeight + 'px';
+      // Scroll messages to bottom so last message is visible
+      var msgs = document.getElementById('msgs');
+      if(msgs && kbHeight > 50) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 100);
+    }
   }
-  setVH();
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize', setVH, {passive:true});
-    window.visualViewport.addEventListener('scroll', setVH, {passive:true});
-  }
-  window.addEventListener('resize', setVH, {passive:true});
-  window.addEventListener('orientationchange', ()=>setTimeout(setVH, 200));
+
+  vv.addEventListener('resize', onVVChange, {passive:true});
+  vv.addEventListener('scroll', onVVChange, {passive:true});
+  window.addEventListener('orientationchange', function(){
+    setTimeout(function(){ lastBottom = -1; onVVChange(); }, 300);
+  });
 })();
 
-// Apply the CSS variable to #pc when it's open on mobile
+// Called when opening a chat — no layout changes needed, just scroll
 function fixPCLayout(){
-  if(window.innerWidth > 700) return;
-  const pc = document.getElementById('pc');
-  if(!pc) return;
-  if(window.visualViewport){
-    const vv = window.visualViewport;
-    pc.style.height = vv.height + 'px';
-    pc.style.top = vv.offsetTop + 'px';
-  }
+  var msgs = document.getElementById('msgs');
+  if(msgs) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 80);
 }
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', fixPCLayout, {passive:true});
-  window.visualViewport.addEventListener('scroll', fixPCLayout, {passive:true});
-}
-window.addEventListener('orientationchange', ()=>setTimeout(fixPCLayout,300));
 </script>
 
 
