@@ -309,9 +309,26 @@ a.ml{color:var(--blue);text-decoration:underline;word-break:break-all}
 
 
 /* CHAT BACKGROUND */
-#bgov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:450;backdrop-filter:blur(4px);align-items:flex-end;justify-content:center}
+#bgov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:450;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px}
 #bgov.on{display:flex}
-#bgbox{background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:0 0 max(24px,env(safe-area-inset-bottom,24px));box-shadow:0 -8px 40px rgba(0,0,0,.2);animation:upSlide .22s ease;max-height:85vh;display:flex;flex-direction:column}
+#bgbox{background:var(--wh);border-radius:20px;width:100%;max-width:440px;padding:20px;box-shadow:0 16px 60px rgba(0,0,0,.25);animation:di .18s ease;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+html.dark #bgbox{background:#1e2235}
+.bg-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin-bottom:0}
+html.dark .bg-title{color:#e2e6f3}
+.bg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bg-opt{aspect-ratio:16/9;border-radius:10px;cursor:pointer;overflow:hidden;border:2.5px solid transparent;transition:border-color .15s;position:relative}
+.bg-opt:hover,.bg-opt.sel{border-color:#1e50ff}
+.bg-opt img{width:100%;height:100%;object-fit:cover;display:block}
+.bg-opt-none{background:#f0f3ff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#7a87ac}
+html.dark .bg-opt-none{background:#252838;color:#5e6585}
+.bg-controls{display:flex;gap:8px;flex-wrap:wrap}
+.bg-ctrl-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--brd);background:transparent;cursor:pointer;font:600 .82rem Manrope,sans-serif;color:var(--navy);transition:all .15s}
+.bg-ctrl-btn:hover{border-color:#1e50ff;color:#1e50ff}
+html.dark .bg-ctrl-btn{border-color:#2a2d3e;color:#e4e7f4}
+.bg-ctrl-btn.active{border-color:#1e50ff;background:rgba(30,80,255,.08);color:#1e50ff}
+.bg-slider-row{display:none}
+.bg-slider-row.on{display:block}
+.bg-slider-lbl{font-size:.78rem;font-weight:600;color:#7a87ac;margin-bottom:6px}
 .bg-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;flex-shrink:0}
 .bg-ttl{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--navy)}
 .bg-cl{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px}
@@ -408,19 +425,54 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 /* MOBILE */
 @media(max-width:700px){
   #pl{width:100%;border-right:none}
+
+  /* Chat panel: slides in, JS sets height via fixPCLayout() */
   #pc{
-    position:fixed;top:0;left:0;right:0;bottom:0;
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
     z-index:50;
     transform:translateX(100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
-    display:flex;flex-direction:column;
-    height:100%;
+    display:flex;
+    flex-direction:column;
     height:100dvh;
-    max-height:100dvh;
+    overflow:hidden;
   }
   #pc.open{transform:translateX(0)}
-  #ia{flex-shrink:0;position:relative;z-index:10;width:100%;background:var(--wh);border-top:1px solid var(--brd);-webkit-transform:translateZ(0);transform:translateZ(0)}
-  #msgs{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain;position:relative;z-index:2}
+
+  /* Messages scroll area — takes all remaining space */
+  #msgs-wrap{
+    flex:1;
+    min-height:0;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  #msgs{
+    flex:1;
+    overflow-y:auto;
+    min-height:0;
+    overscroll-behavior:contain;
+    position:relative;
+    z-index:2;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Input area: always at bottom, never flies off screen */
+  #ia{
+    flex-shrink:0 !important;
+    position:relative;
+    z-index:20;
+    width:100%;
+    background:var(--wh);
+    border-top:1px solid var(--brd);
+    -webkit-transform:translateZ(0);
+    transform:translateZ(0);
+    /* Bottom safe area for iOS home indicator */
+    padding-bottom:max(env(safe-area-inset-bottom,0px), 0px);
+  }
+
   .back{display:flex}
   #nc{display:none}
   #ch{height:62px;flex-shrink:0}
@@ -432,7 +484,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
   .mmeta{font-size:.7rem;padding:2px 10px 7px}
   .mmeta .mt{font-size:.7rem}
   .tks svg{width:15px;height:15px}
-  .ir{padding:12px 10px;padding-bottom:max(14px,env(safe-area-inset-bottom,14px))}
+  .ir{padding:10px 10px;padding-bottom:max(10px,0px)}
   .iw{min-height:50px;padding:10px 12px}
   .iw textarea{font-size:1.05rem}
   .snd{width:50px;height:50px}
@@ -751,30 +803,13 @@ html.dark #lscroll .ci { border-bottom-color: #1e2236; }
 
 
 /* ── CHAT WALLPAPER ── */
-#msgs-wrap { position: relative; flex: 1; min-height: 0; overflow: visible; display: flex; flex-direction: column; }
-#chat-bg { position: absolute; inset: 0; background-size: cover; background-position: center; pointer-events: none; z-index: 0; transition: opacity .3s; border-radius: inherit; }
-#msgs { position: relative; z-index: 1; }
-/* Wallpaper modal */
-#bgov { display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px }
-#bgov.on { display:flex }
-#bgbox { background:#fff;border-radius:20px;width:100%;max-width:480px;padding:20px;box-shadow:0 16px 60px rgba(0,0,0,.2);animation:di .18s ease }
-html.dark #bgbox { background:#1e2130 }
-.bg-title { font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:#0b1535;margin-bottom:14px }
-html.dark .bg-title { color:#e4e7f4 }
-.bg-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px }
-.bg-opt { aspect-ratio:16/9;border-radius:10px;cursor:pointer;overflow:hidden;border:2.5px solid transparent;transition:border-color .15s;position:relative }
-.bg-opt:hover,.bg-opt.sel { border-color:#1e50ff }
-.bg-opt img { width:100%;height:100%;object-fit:cover;display:block }
-.bg-opt-none { background:#f0f3ff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#7a87ac }
-html.dark .bg-opt-none { background:#252838;color:#5e6585 }
-.bg-controls { display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap }
-.bg-ctrl-btn { display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1.5px solid #dde3f5;background:transparent;cursor:pointer;font:600 .82rem Manrope,sans-serif;color:#0b1535;transition:all .15s }
-.bg-ctrl-btn:hover { border-color:#1e50ff;color:#1e50ff }
-html.dark .bg-ctrl-btn { border-color:#2a2d3e;color:#e4e7f4 }
-.bg-ctrl-btn.active { border-color:#1e50ff;background:rgba(30,80,255,.08);color:#1e50ff }
-.bg-slider-row { margin-bottom:14px;display:none }
-.bg-slider-row.on { display:block }
-.bg-slider-lbl { font-size:.78rem;font-weight:600;color:#7a87ac;margin-bottom:6px }
+/* msgs-wrap clips overflow so blur doesn't leak outside */
+#msgs-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+/* bg element is behind everything, slightly oversized to hide blur edges */
+#chat-bg { position: absolute; inset: -4px; background-size: cover; background-position: center; pointer-events: none; z-index: 0; transition: opacity .3s; display: none; }
+/* messages above bg and overlay */
+#msgs { position: relative; z-index: 2; }
+/* bg modal CSS consolidated above */
 
 </style>
 </head>
@@ -1682,7 +1717,8 @@ const Z={
     }
     Q('nc').style.display='none'; Q('ch').style.display='flex'; Q('msgs').style.display='flex'; Q('msgs').style.flexDirection='column';
     Q('ia').style.display='flex'; Q('ia').style.flexDirection='column'; Q('pc').classList.add('open');
-    if(window.visualViewport&&window.innerWidth<=700){const vv=window.visualViewport;Q('pc').style.height=vv.height+'px';Q('pc').style.top=vv.offsetTop+'px';}
+    // Fix layout for keyboard on mobile
+    setTimeout(fixPCLayout, 50);
     const chav=Q('chav'); chav.style.background=`linear-gradient(135deg,${c.g[0]},${c.g[1]})`; chav.innerHTML='';
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
@@ -2286,29 +2322,45 @@ function saveChatBg(chatId){
 function applyBgNow(){
   const el = document.getElementById('chat-bg');
   if(!el) return;
-  if(!bgState.url){ 
-    el.style.cssText='background:none;opacity:0;filter:none';
-    const ov=document.getElementById('chat-bg-overlay');
-    if(ov)ov.style.background='transparent';
-    return; 
+
+  if(!bgState.url){
+    // No background - hide the bg element
+    el.style.display = 'none';
+    el.style.backgroundImage = 'none';
+    // Remove overlay
+    const ov = document.getElementById('chat-bg-overlay');
+    if(ov) ov.style.background = 'transparent';
+    return;
   }
-  el.style.backgroundImage = `url('${bgState.url}')`;
+
+  // Show background
+  el.style.display = 'block';
+  el.style.backgroundImage = "url('" + bgState.url + "')";
   el.style.backgroundSize = 'cover';
   el.style.backgroundPosition = 'center';
-  el.style.opacity = '1';
-  // BLUR — apply filter with scale to avoid white edges
-  el.style.filter = bgState.blur ? 'blur(8px)' : 'none';
-  el.style.transform = bgState.blur ? 'scale(1.08)' : 'none';
-  // Dark overlay
+
+  // BLUR: apply filter directly to the bg element
+  // inset:-10px on #chat-bg (via CSS) hides the blur edges
+  if(bgState.blur){
+    el.style.filter = 'blur(10px)';
+    el.style.inset = '-15px'; // extra bleed to hide blur edges
+  } else {
+    el.style.filter = 'none';
+    el.style.inset = '-4px'; // small bleed just to fill
+  }
+
+  // Dark overlay — sits BETWEEN #chat-bg (z:0) and #msgs (z:2)
+  // It must NOT cover messages, just tint the background
   let overlay = document.getElementById('chat-bg-overlay');
   if(!overlay){
     overlay = document.createElement('div');
     overlay.id = 'chat-bg-overlay';
     overlay.style.cssText = 'position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .3s';
     const wrap = document.getElementById('msgs-wrap');
-    if(wrap) wrap.appendChild(overlay);
+    if(wrap) wrap.insertBefore(overlay, wrap.querySelector('#msgs'));
   }
-  overlay.style.background = bgState.dark ? `rgba(0,0,0,${bgState.darkVal/100})` : 'transparent';
+  // Only tint the bg, NOT the messages
+  overlay.style.background = bgState.dark ? 'rgba(0,0,0,' + (bgState.darkVal/100) + ')' : 'transparent';
 }
 function openBgPicker(){
   Z.hhm(); // Close the header menu first
@@ -2333,7 +2385,10 @@ function openBgPicker(){
   document.getElementById('bg-blur-btn').classList.toggle('active',bgState.blur);
   document.getElementById('bg-dark-btn').classList.toggle('active',bgState.dark);
   document.getElementById('bg-dark-row').classList.toggle('on',bgState.dark);
-  document.getElementById('bg-dark-slider').value = bgState.darkVal;
+  const _dsl = document.getElementById('bg-dark-slider');
+  if(_dsl) _dsl.value = bgState.darkVal;
+  const _dvl = document.getElementById('bg-dark-val-lbl');
+  if(_dvl) _dvl.textContent = bgState.darkVal + '%';
 }
 function closeBgPicker(){
   document.getElementById('bgov').classList.remove('on');
@@ -2690,66 +2745,53 @@ function applyBg(){
 // Per-chat background loaded when chat opens
 
 // ── MOBILE KEYBOARD FIX ──
-// Mobile keyboard / viewport fix - works with zoom
-if(window.visualViewport){
-  function fixLayout(){
-    const pc=document.getElementById('pc');
-    if(!pc||!pc.classList.contains('open')) return;
-    // Use visualViewport to get the actual visible area accounting for keyboard and zoom
-    const vv=window.visualViewport;
-    const zoomFactor = vv.scale || 1;
-    // Height and offset accounting for zoom
-    const h=vv.height;
-    const t=vv.offsetTop;
-    pc.style.height=h+'px';
-    pc.style.top=t+'px';
-    pc.style.bottom='auto';
-    pc.style.position='fixed';
-    // Ensure input area is visible
-    const ia=document.getElementById('ia');
-    if(ia){
-      ia.style.position='relative';
-      ia.style.zIndex='20';
-    }
+// Approach: set CSS variable --vh that updates with visualViewport
+// This works on iOS Safari, Android Chrome, with any zoom level
+(function(){
+  function setVH(){
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--real-vh', h + 'px');
+    document.documentElement.style.setProperty('--real-top', (window.visualViewport ? window.visualViewport.offsetTop : 0) + 'px');
   }
-  window.visualViewport.addEventListener('resize',fixLayout,{passive:true});
-  window.visualViewport.addEventListener('scroll',fixLayout,{passive:true});
-  // Also fix on orientation change
-  window.addEventListener('orientationchange',()=>setTimeout(fixLayout,300));
+  setVH();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', setVH, {passive:true});
+    window.visualViewport.addEventListener('scroll', setVH, {passive:true});
+  }
+  window.addEventListener('resize', setVH, {passive:true});
+  window.addEventListener('orientationchange', ()=>setTimeout(setVH, 200));
+})();
+
+// Apply the CSS variable to #pc when it's open on mobile
+function fixPCLayout(){
+  if(window.innerWidth > 700) return;
+  const pc = document.getElementById('pc');
+  if(!pc) return;
+  if(window.visualViewport){
+    const vv = window.visualViewport;
+    pc.style.height = vv.height + 'px';
+    pc.style.top = vv.offsetTop + 'px';
+  }
 }
-// Extra fix: when textarea is focused on mobile, scroll it into view
-document.addEventListener('DOMContentLoaded',function(){
-  const ta=document.getElementById('ta');
-  if(ta){
-    ta.addEventListener('focus',function(){
-      if(window.innerWidth<=700){
-        setTimeout(()=>{
-          const ia=document.getElementById('ia');
-          if(ia) ia.scrollIntoView({block:'end',behavior:'smooth'});
-          if(window.visualViewport){
-            const pc=document.getElementById('pc');
-            if(pc&&pc.classList.contains('open')){
-              const vv=window.visualViewport;
-              pc.style.height=vv.height+'px';
-              pc.style.top=vv.offsetTop+'px';
-            }
-          }
-        },300);
-      }
-    });
-  }
-});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', fixPCLayout, {passive:true});
+  window.visualViewport.addEventListener('scroll', fixPCLayout, {passive:true});
+}
+window.addEventListener('orientationchange', ()=>setTimeout(fixPCLayout,300));
 </script>
 
 
 <!-- CHAT BACKGROUND MODAL -->
 <div id="bgov" onclick="if(event.target===this)closeBgPicker()">
   <div id="bgbox">
-    <div class="bg-title">Фон чата</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="bg-title">Фон чата</div>
+      <button onclick="closeBgPicker()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
     <div class="bg-grid" id="bg-grid"></div>
     <div class="bg-controls">
       <button class="bg-ctrl-btn" id="bg-blur-btn" onclick="toggleBgBlur()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" stroke-dasharray="3 2"/></svg>
         Блюр
       </button>
       <button class="bg-ctrl-btn" id="bg-dark-btn" onclick="toggleBgDark()">
@@ -2758,12 +2800,12 @@ document.addEventListener('DOMContentLoaded',function(){
       </button>
     </div>
     <div class="bg-slider-row" id="bg-dark-row">
-      <div class="bg-slider-lbl">Уровень затемнения</div>
-      <input type="range" id="bg-dark-slider" min="0" max="80" value="40" oninput="applyBgDark(+this.value)" style="width:100%;height:4px;accent-color:#1e50ff">
+      <div class="bg-slider-lbl">Уровень затемнения <span id="bg-dark-val-lbl" style="color:#1e50ff;font-weight:700">40%</span></div>
+      <input type="range" id="bg-dark-slider" min="0" max="80" value="40" oninput="applyBgDark(+this.value);document.getElementById('bg-dark-val-lbl').textContent=this.value+'%'" style="width:100%;height:4px;accent-color:#1e50ff;margin-top:6px">
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
-      <button onclick="clearChatBg()" style="padding:8px 16px;border:1.5px solid #dde3f5;border-radius:10px;background:transparent;cursor:pointer;font:600 .85rem Manrope,sans-serif;color:#7a87ac">Убрать фон</button>
-      <button onclick="closeBgPicker()" style="padding:8px 20px;border:none;border-radius:10px;background:#1e50ff;color:#fff;cursor:pointer;font:600 .85rem Manrope,sans-serif">Готово</button>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px">
+      <button onclick="clearChatBg()" style="padding:9px 16px;border:1.5px solid var(--brd);border-radius:10px;background:transparent;cursor:pointer;font:600 .85rem Manrope,sans-serif;color:var(--muted)">Убрать фон</button>
+      <button onclick="closeBgPicker()" style="padding:9px 22px;border:none;border-radius:10px;background:#1e50ff;color:#fff;cursor:pointer;font:700 .85rem Manrope,sans-serif">Готово</button>
     </div>
   </div>
 </div>
