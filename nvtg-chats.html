@@ -32,10 +32,10 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 #app{display:flex;height:100dvh;overflow:hidden}
 
 /* SIDEBAR (same style as profile/settings) */
-.sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:38px;height:38px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbh{height:56px;padding:0 14px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:7px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sbmark{width:40px;height:40px;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
-.sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
+.sbnm{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
 .si{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;transition:background .15s}
 .si:hover{background:rgba(255,255,255,.07)}
@@ -382,11 +382,13 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     transform:translateX(100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
     display:flex;flex-direction:column;
+    height:100%;
     height:100dvh;
+    max-height:100dvh;
   }
   #pc.open{transform:translateX(0)}
-  #ia{flex-shrink:0;position:relative;z-index:5}
-  #msgs{flex:1;overflow-y:auto;min-height:0}
+  #ia{flex-shrink:0;position:relative;z-index:5;width:100%;background:var(--wh)}
+  #msgs{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain}
   .back{display:flex}
   #nc{display:none}
   #ch{height:62px;flex-shrink:0}
@@ -424,7 +426,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 <div id="dov" onclick="D.cd()"></div>
 <div id="drw">
   <div class="sbh">
-    <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="36" height="36"><defs><linearGradient id="blGc1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGc1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
+    <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="38" height="38"><defs><linearGradient id="blGc1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGc1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
     <div class="sbnm">NV<span>TG</span></div>
   </div>
   <nav class="dnav">
@@ -865,6 +867,16 @@ function startTyping(){
   typingTimer=setTimeout(()=>{},3000);
 }
 
+let reactionSub=null;
+function subscribeReactions(chatId){
+  if(reactionSub){sb.removeChannel(reactionSub);reactionSub=null;}
+  reactionSub=sb.channel('reactions-'+chatId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'message_reactions',filter:`chat_id=eq.${chatId}`},async()=>{
+      // Reload all reactions for this chat
+      await loadReactions(chatId);
+      Z.rm();
+    }).subscribe();
+}
 function subscribeTyping(partnerId){
   if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
   const chatId=makeChatId(ME.id,partnerId);
@@ -1193,7 +1205,14 @@ const Z={
           const c={id:prof.id,name:prof.full_name||prof.username||'?',sub:'@'+uname,subHtml,photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:uname,verified:prof.verified||false};
           const recent=JSON.parse(LS.get('nvtg_recent','[]'));
           if(!recent.find(r=>r.id===prof.id)){recent.unshift({id:prof.id,name:c.name,avatar:prof.avatar_url||null,username:uname});if(recent.length>15)recent.pop();LS.setJ('nvtg_recent',recent);}
-          s.appendChild(Z.bci(c,i,subHtml));
+          const searchRow = Z.bci(c,i,subHtml);
+          // Long press on search result opens profile
+          let _sp=null;
+          searchRow.addEventListener('touchstart',e=>{_sp=setTimeout(()=>openUP(prof.id),600);},{passive:true});
+          searchRow.addEventListener('touchend',()=>clearTimeout(_sp),{passive:true});
+          searchRow.addEventListener('touchmove',()=>clearTimeout(_sp),{passive:true});
+          searchRow.addEventListener('contextmenu',e=>{e.preventDefault();openUP(prof.id);});
+          s.appendChild(searchRow);
         });
       });
   },
@@ -1330,6 +1349,7 @@ const Z={
       await loadMessages(id);
       subscribeChatMessages(id);
       subscribeTyping(id);
+      subscribeReactions(makeChatId(ME.id,id));
     }
     setTimeout(()=>{const m=Q('msgs');if(m)m.scrollTop=m.scrollHeight;},30);
     Q('ta').focus();
@@ -1337,6 +1357,7 @@ const Z={
   bl(){
     Q('pc').classList.remove('open');S.cur=null;
     if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
+    if(reactionSub){sb.removeChannel(reactionSub);reactionSub=null;}
     if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
     if(typingChannel){sb.removeChannel(typingChannel);typingChannel=null;}
     const tb=Q('typing-bar');if(tb)tb.style.display='none';
@@ -2082,15 +2103,18 @@ function clMenuDel(){hideCLMenu();if(_clChatId){S.dchid=_clChatId;document.getEl
 document.addEventListener('click',e=>{if(!document.getElementById('clmenu').contains(e.target))hideCLMenu();});
 
 // ── MOBILE KEYBOARD FIX ──
-if(window.visualViewport && window.innerWidth<=700){
+if(window.visualViewport){
   const updateLayout=()=>{
-    const pc=Q('pc');if(!pc.classList.contains('open')) return;
+    const pc=Q('pc');if(!pc||!pc.classList.contains('open')) return;
     const vv=window.visualViewport;
     pc.style.height=vv.height+'px';
     pc.style.top=vv.offsetTop+'px';
+    // Ensure input bar visible
+    const ia=Q('ia');
+    if(ia){ia.style.position='relative';ia.style.bottom='0';}
   };
-  window.visualViewport.addEventListener('resize',updateLayout);
-  window.visualViewport.addEventListener('scroll',updateLayout);
+  window.visualViewport.addEventListener('resize',updateLayout,{passive:true});
+  window.visualViewport.addEventListener('scroll',updateLayout,{passive:true});
 }
 </script>
 </body>

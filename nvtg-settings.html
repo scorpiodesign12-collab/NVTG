@@ -45,7 +45,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   .bur{display:flex!important}
 }
 .sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:38px;height:38px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark{width:40px;height:40px;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
 .sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
@@ -162,7 +162,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   <!-- SIDEBAR -->
   <div id="sb">
     <div class="sbh">
-      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="36" height="36"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
+      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="38" height="38"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
       <div class="sbnm">NV<span>TG</span></div>
     </div>
     <nav class="sbnav">
@@ -226,17 +226,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 
       <!-- APPEARANCE -->
       <div class="card">
-        <div class="slbl">Отображение</div>
-
-        <!-- Language row -->
-        <div class="row" onclick="openLang()">
-          <div class="ric">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          </div>
-          <div class="rl"><div class="rlt">Язык</div></div>
-          <span class="rv" id="langval">Русский</span>
-          <svg class="rarr" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
+        <div class="slbl">Масштаб</div>
 
         <!-- Scale toggle + slider -->
         <div style="position:relative">
@@ -271,23 +261,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   </div>
 </div>
 
-<!-- LANGUAGE MODAL -->
-<div id="lov" onclick="if(event.target===this)closeLang()">
-  <div id="lbox">
-    <div class="lmtl">Выберите язык</div>
-    <div class="lopt sel" id="lopt-ru" onclick="setLang('ru')">
-      <span class="lopt-flag">🇷🇺</span>
-      <div><div class="lopt-nm">Русский</div><div class="lopt-sub">Russian</div></div>
-      <div class="lopt-chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-    </div>
-    <div class="lopt" id="lopt-en" onclick="setLang('en')">
-      <span class="lopt-flag">🇬🇧</span>
-      <div><div class="lopt-nm">English</div><div class="lopt-sub">Английский</div></div>
-      <div class="lopt-chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-    </div>
-    <button class="lcanc" onclick="closeLang()">Отмена</button>
-  </div>
-</div>
+
 
 <!-- TOAST -->
 <div id="toast"></div>
@@ -339,73 +313,16 @@ async function loadFromSupabase(){
 }
 
 // ── LANGUAGE ──
-const LANGS = { ru:'Русский', en:'English' };
-let curLang = localStorage.getItem('nvtg_lang') || 'ru';
-
-function renderLang(){
-  Q('langval').textContent = LANGS[curLang];
-  ['ru','en'].forEach(l=>{
-    Q('lopt-'+l).classList.toggle('sel', l===curLang);
-  });
+);
 }
 
-function openLang(){
-  Q('lov').classList.add('on');
-}
-function closeLang(){
-  Q('lov').classList.remove('on');
-}
-const I18N = {
-  ru: {
-    settings:'Настройки', account:'Аккаунт', myaccount:'Мой аккаунт',
-    nameuserphoto:'Имя, юзернейм, фото', appearance:'Отображение',
-    language:'Язык', scale:'Масштаб интерфейса', online:'в сети',
-    chats:'Чаты', myprofile:'Мой профиль', favorites:'Избранное', logout:'Выйти',
-    textsize:'Размер текста', savescale:'Сохранить масштаб', chooselang:'Выберите язык', cancel:'Отмена'
-  },
-  en: {
-    settings:'Settings', account:'Account', myaccount:'My Account',
-    nameuserphoto:'Name, username, photo', appearance:'Appearance',
-    language:'Language', scale:'Interface Scale', online:'online',
-    chats:'Chats', myprofile:'My Profile', favorites:'Favorites', logout:'Logout',
-    textsize:'Text Size', savescale:'Save scale', chooselang:'Choose language', cancel:'Cancel'
-  }
-};
-function applyI18n(l){
-  const t=I18N[l]||I18N.ru;
-  const $ = s => document.querySelector(s);
-  const $$ = s => document.querySelectorAll(s);
-  try{
-    document.querySelector('.tttl').textContent=t.settings;
-    document.querySelector('#ust').textContent=t.online;
-    // Sidebar
-    const sis=document.querySelectorAll('.si span');
-    if(sis[0]) sis[0].textContent=t.chats;
-    if(sis[1]) sis[1].textContent=t.myprofile;
-    if(sis[2]) sis[2].textContent=t.favorites;
-    if(sis[4]) sis[4].textContent=t.logout;
-    // Cards
-    const sects=document.querySelectorAll('.slbl');
-    if(sects[0]) sects[0].textContent=t.account;
-    if(sects[1]) sects[1].textContent=t.appearance;
-    // Rows
-    const rows=document.querySelectorAll('.rlt');
-    if(rows[0]) rows[0].textContent=t.myaccount;
-    if(rows[1]) rows[1].textContent=t.nameuserphoto;
-    if(rows[2]) rows[2].textContent=t.language;
-    if(rows[3]) rows[3].textContent=t.scale;
-    // Modal title
-    const lmtl=document.querySelector('.lmtl');if(lmtl)lmtl.textContent=t.chooselang;
-    const lcanc=document.querySelector('.lcanc');if(lcanc)lcanc.textContent=t.cancel;
-    // Scale
-    const sl=document.querySelector('.scale-lbl');if(sl)sl.textContent=t.textsize;
-    const sb2=document.querySelector('button[onclick="saveScale()"]');if(sb2)sb2.textContent=t.savescale;
-  }catch(e){}
-}
+
+
+;
+
 function setLang(l){
   curLang = l;
   localStorage.setItem('nvtg_lang', l);
-  renderLang();
   applyI18n(l);
   setTimeout(closeLang, 220);
   showToast(l==='ru' ? 'Язык: Русский' : 'Language: English');
@@ -507,8 +424,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', ()=>{
   renderUser('Пользователь','','');
-  renderLang();
-  applyI18n(curLang);
   renderScale();
   loadFromSupabase();
 });
