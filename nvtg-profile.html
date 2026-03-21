@@ -18,7 +18,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 #sb.open{transform:translateX(0)}
 @media(min-width:701px){#sb{position:fixed;box-shadow:6px 0 30px rgba(0,0,0,.2)}.bur{display:flex!important}}
 .sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:34px;height:34px;background:var(--b);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark{width:34px;height:34px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
 .sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
@@ -45,7 +45,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .pscr{flex:1;overflow-y:auto;padding-bottom:20px}
 .pscr::-webkit-scrollbar{width:3px}
 .pscr::-webkit-scrollbar-thumb{background:var(--br);border-radius:3px}
-.hero{background:var(--w);display:flex;flex-direction:column;align-items:center;padding:30px 20px 22px;border-bottom:1px solid var(--br);margin-bottom:8px}
+.hero{background:var(--w);display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 20px 22px;border-bottom:1px solid var(--br);margin-bottom:8px}
 .avw{position:relative;cursor:pointer;width:88px;height:88px;margin-bottom:14px}
 .avc{width:88px;height:88px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#fff;transition:filter .15s}
 .avw:hover .avc{filter:brightness(.85)}
@@ -67,6 +67,12 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .rv{font-size:.82rem;color:var(--m);margin-top:2px}
 .rv.b{color:var(--b)}
 .ra{font-size:.8rem;color:var(--b);font-weight:600;margin-left:auto;white-space:nowrap}
+.tog{position:relative;width:46px;height:26px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tslider{position:absolute;inset:0;background:var(--br);border-radius:13px;transition:.25s;cursor:pointer}
+.tslider::before{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tog input:checked+.tslider{background:var(--b)}
+.tog input:checked+.tslider::before{transform:translateX(20px)}
 .hint{font-size:.74rem;color:var(--m);padding:4px 16px 10px;line-height:1.5}
 .bio-row{padding:12px 16px;cursor:pointer;transition:background .12s;min-height:46px}
 .bio-row:hover{background:rgba(11,21,53,.03)}
@@ -91,6 +97,43 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 .db{padding:9px 22px;border:none;border-radius:10px;cursor:pointer;font:600 .9rem/1 'Manrope',sans-serif;outline:none;transition:.15s}
 .db.c{background:var(--bg);color:var(--m)}.db.c:hover{background:var(--br)}
 .db.s{background:var(--b);color:#fff}.db.s:hover{background:var(--b2)}
+/* FRIENDS SECTION */
+.friends-sep{height:1px;background:var(--br);margin:0 16px}
+.friends-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px}
+.friends-title{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--m)}
+.friends-count{font-size:.66rem;font-weight:700;color:var(--b)}
+.friend-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;transition:background .12s}
+.friend-item:hover{background:rgba(11,21,53,.03)}
+.fav2{width:42px;height:42px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:#fff;flex-shrink:0}
+.fav2 img{width:100%;height:100%;object-fit:cover;display:block}
+.finfo{flex:1;min-width:0}
+.fnm{font-size:.9rem;font-weight:700;color:var(--n);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fus{font-size:.76rem;color:var(--b);font-weight:600}
+.fremove{background:none;border:1.5px solid var(--br);border-radius:8px;padding:5px 12px;font:600 .76rem 'Manrope',sans-serif;color:var(--m);cursor:pointer;transition:all .15s;white-space:nowrap}
+.fremove:hover{border-color:var(--er);color:var(--er)}
+.friends-empty{padding:16px 16px 20px;font-size:.84rem;color:var(--m);text-align:center}
+/* FRIEND REQUESTS BADGE */
+.freq-badge{background:var(--b);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:6px}
+/* PRIVATE ACCOUNT */
+.priv-row{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .12s;position:relative}
+.priv-row:hover{background:rgba(11,21,53,.03)}
+/* FRIENDS MODAL (запросы) */
+#frov{display:none;position:fixed;inset:0;background:rgba(11,21,53,.5);z-index:300;backdrop-filter:blur(4px);align-items:flex-end;justify-content:center}
+#frov.on{display:flex}
+#frbox{background:var(--w);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;padding:0 0 max(20px,env(safe-area-inset-bottom,20px));box-shadow:0 -8px 40px rgba(11,21,53,.18);animation:upsl .22s ease}
+@keyframes upsl{from{transform:translateY(100%)}to{transform:none}}
+.frbox-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px}
+.frbox-ttl{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--n)}
+.frbox-cl{background:none;border:none;cursor:pointer;color:var(--m);padding:4px}
+.frbox-scr{flex:1;overflow-y:auto;padding:0 0 4px}
+.frbox-scr::-webkit-scrollbar{width:0}
+.freq-item{display:flex;align-items:center;gap:12px;padding:10px 18px}
+.freq-btns{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+.freq-acc{background:var(--b);color:#fff;border:none;border-radius:8px;padding:6px 14px;font:600 .8rem 'Manrope',sans-serif;cursor:pointer;transition:background .15s}
+.freq-acc:hover{background:var(--b2)}
+.freq-dec{background:var(--bg);color:var(--m);border:1.5px solid var(--br);border-radius:8px;padding:6px 14px;font:600 .8rem 'Manrope',sans-serif;cursor:pointer;transition:all .15s}
+.freq-dec:hover{border-color:var(--er);color:var(--er)}
+
 #cov{display:none;position:fixed;inset:0;background:rgba(11,21,53,.75);z-index:400;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px}
 #cov.on{display:flex}
 #cbox{background:var(--w);border-radius:20px;width:100%;max-width:380px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:zin .18s ease}
@@ -114,7 +157,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 <div id="app">
   <div id="sb">
     <div class="sbh">
-      <div class="sbmark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="18" r="3.5" fill="#1e50ff"/></svg></div>
+      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="18" height="18"><defs><linearGradient id="blGp1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGp1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
       <div class="sbnm">NV<span>TG</span></div>
     </div>
     <nav class="sbnav">
@@ -157,10 +200,58 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
           <span class="ra">Изменить</span>
         </div>
       </div>
+      <!-- PRIVATE ACCOUNT (only for verified) -->
+      <div class="card" id="priv-card" style="display:none">
+        <div class="slbl">Безопасность</div>
+        <div class="priv-row" onclick="togglePrivate()">
+          <div class="ric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div style="flex:1;min-width:0"><div class="rl">Приватный аккаунт</div><div class="rv" style="color:var(--m);font-size:.78rem;margin-top:2px">Только разрешённые могут писать</div></div>
+          <label class="tog" onclick="event.stopPropagation()">
+            <input type="checkbox" id="privtog" onchange="togglePrivate()">
+            <span class="tslider"></span>
+          </label>
+        </div>
+        <!-- Allowed users list -->
+        <div id="allowed-list" style="display:none;padding:0 16px 12px">
+          <div style="font-size:.72rem;color:var(--m);font-weight:600;margin-bottom:8px">Могут писать:</div>
+          <div id="allowed-users"></div>
+        </div>
+      </div>
+
+      <!-- FRIENDS SECTION -->
+      <div class="card" id="friends-card">
+        <div class="friends-header">
+          <span class="friends-title">Друзья</span>
+          <span class="friends-count" id="friends-count">0</span>
+        </div>
+        <div class="friends-sep"></div>
+        <!-- Incoming requests -->
+        <div id="freq-row" style="display:none">
+          <div class="row" onclick="openFriendReqs()" style="cursor:pointer">
+            <div class="ric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="rl" style="font-size:.9rem;font-weight:600;color:var(--n)">Запросы в друзья<span class="freq-badge" id="freq-badge">0</span></div>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--br)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="friends-sep"></div>
+        </div>
+        <!-- Friends list -->
+        <div id="friends-list"><div class="friends-empty">У вас пока нет друзей.<br>Найдите людей через поиск!</div></div>
+      </div>
     </div>
   </div>
 </div>
 <div id="toast">Скопировано</div>
+
+<!-- FRIEND REQUESTS MODAL -->
+<div id="frov" onclick="if(event.target===this)closeFriendReqs()">
+  <div id="frbox">
+    <div class="frbox-hdr">
+      <span class="frbox-ttl">Запросы в друзья</span>
+      <button class="frbox-cl" onclick="closeFriendReqs()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="frbox-scr" id="freq-list"></div>
+  </div>
+</div>
 <div id="eov" onclick="closeEdit(event)">
   <div id="ebox">
     <div class="etl">Редактировать профиль</div>
@@ -272,6 +363,119 @@ cs.addEventListener('wheel',e=>{e.preventDefault();const ns=Math.max(.5,Math.min
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){Q('eov').classList.remove('on');Q('cov').classList.remove('on');toggleSB(false);}});
 let _tx=0;Q('sb').addEventListener('touchstart',e=>{_tx=e.touches[0].clientX;},{passive:true});Q('sb').addEventListener('touchend',e=>{if(_tx-e.changedTouches[0].clientX>60)toggleSB(false);},{passive:true});
 
+// ── FRIENDS SYSTEM ──
+const GRADS2=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd'],['#e74c3c','#ff7675'],['#2980b9','#74b9ff']];
+let myFriends=[], incomingReqs=[], isPrivate=false;
+
+function gradFor(uid){ return GRADS2[(uid||'a').charCodeAt(0)%GRADS2.length]; }
+
+function avatarEl(uid, av, name, size=42){
+  const d=document.createElement('div');
+  d.className='fav2';d.style.cssText=`width:${size}px;height:${size}px;font-size:${size*.22}rem`;
+  const g=gradFor(uid);d.style.background=`linear-gradient(135deg,${g[0]},${g[1]})`;
+  if(av){const im=document.createElement('img');im.src=av;d.appendChild(im);}
+  else d.textContent=(name||'?')[0].toUpperCase();
+  return d;
+}
+
+async function loadFriends(){
+  if(!D.id) return;
+  // Load accepted friends
+  const {data:fr}=await sb.from('friendships')
+    .select('requester_id,addressee_id,profiles!friendships_requester_id_fkey(id,full_name,username,avatar_url),profiles!friendships_addressee_id_fkey(id,full_name,username,avatar_url)')
+    .or(`requester_id.eq.${D.id},addressee_id.eq.${D.id}`)
+    .eq('status','accepted');
+  myFriends=(fr||[]).map(f=>{
+    const isReq=f.requester_id===D.id;
+    const p=isReq?f['profiles!friendships_addressee_id_fkey']:f['profiles!friendships_requester_id_fkey'];
+    return p;
+  }).filter(Boolean);
+
+  // Load incoming requests
+  const {data:reqs}=await sb.from('friendships')
+    .select('id,requester_id,profiles!friendships_requester_id_fkey(id,full_name,username,avatar_url)')
+    .eq('addressee_id',D.id).eq('status','pending');
+  incomingReqs=(reqs||[]);
+
+  // Load private setting
+  const {data:priv}=await sb.from('profiles').select('is_private').eq('id',D.id).single();
+  isPrivate=priv?.is_private||false;
+
+  renderFriends();
+}
+
+function renderFriends(){
+  // Count
+  document.getElementById('friends-count').textContent=myFriends.length;
+  // Private card (verified only)
+  if(D.verified){
+    document.getElementById('priv-card').style.display='block';
+    document.getElementById('privtog').checked=isPrivate;
+    document.getElementById('allowed-list').style.display=isPrivate&&myFriends.length?'block':'none';
+  }
+  // Requests badge
+  const freqRow=document.getElementById('freq-row');
+  const badge=document.getElementById('freq-badge');
+  if(incomingReqs.length){freqRow.style.display='block';badge.textContent=incomingReqs.length;}
+  else freqRow.style.display='none';
+
+  // Friends list
+  const fl=document.getElementById('friends-list');
+  fl.innerHTML='';
+  if(!myFriends.length){fl.innerHTML='<div class="friends-empty">У вас пока нет друзей.<br>Найдите людей через поиск!</div>';return;}
+  myFriends.forEach(p=>{
+    const row=document.createElement('div');row.className='friend-item';
+    row.appendChild(avatarEl(p.id,p.avatar_url,p.full_name));
+    const info=document.createElement('div');info.className='finfo';
+    info.innerHTML=`<div class="fnm">${p.full_name||p.username||'?'}</div><div class="fus">@${(p.username||'').replace(/^@/,'')}</div>`;
+    const rm=document.createElement('button');rm.className='fremove';rm.textContent='Удалить';
+    rm.onclick=async()=>{
+      if(!confirm('Удалить из друзей?')) return;
+      await sb.from('friendships').delete()
+        .or(`and(requester_id.eq.${D.id},addressee_id.eq.${p.id}),and(requester_id.eq.${p.id},addressee_id.eq.${D.id})`);
+      myFriends=myFriends.filter(f=>f.id!==p.id);
+      renderFriends();
+    };
+    row.append(info,rm);fl.appendChild(row);
+  });
+}
+
+function openFriendReqs(){
+  document.getElementById('frov').classList.add('on');
+  const list=document.getElementById('freq-list');list.innerHTML='';
+  if(!incomingReqs.length){list.innerHTML='<div class="friends-empty">Нет новых запросов</div>';return;}
+  incomingReqs.forEach(req=>{
+    const p=req['profiles!friendships_requester_id_fkey'];
+    if(!p) return;
+    const row=document.createElement('div');row.className='freq-item';
+    row.appendChild(avatarEl(p.id,p.avatar_url,p.full_name));
+    const info=document.createElement('div');info.className='finfo';
+    info.innerHTML=`<div class="fnm">${p.full_name||p.username||'?'}</div><div class="fus">@${(p.username||'').replace(/^@/,'')}</div>`;
+    const btns=document.createElement('div');btns.className='freq-btns';
+    const acc=document.createElement('button');acc.className='freq-acc';acc.textContent='Принять';
+    acc.onclick=async()=>{
+      await sb.from('friendships').update({status:'accepted'}).eq('id',req.id);
+      myFriends.push(p);incomingReqs=incomingReqs.filter(r=>r.id!==req.id);
+      renderFriends();row.remove();
+    };
+    const dec=document.createElement('button');dec.className='freq-dec';dec.textContent='Отклонить';
+    dec.onclick=async()=>{
+      await sb.from('friendships').delete().eq('id',req.id);
+      incomingReqs=incomingReqs.filter(r=>r.id!==req.id);
+      renderFriends();row.remove();
+    };
+    btns.append(acc,dec);row.append(info,btns);list.appendChild(row);
+  });
+}
+function closeFriendReqs(){ document.getElementById('frov').classList.remove('on'); }
+
+async function togglePrivate(){
+  isPrivate=document.getElementById('privtog').checked;
+  await sb.from('profiles').update({is_private:isPrivate}).eq('id',D.id);
+  renderFriends();
+  showToast(isPrivate?'Приватный аккаунт включён':'Приватный аккаунт выключен');
+}
+
 window.addEventListener('DOMContentLoaded',async()=>{
   const {data:{user}}=await sb.auth.getUser();
   if(!user){location.href='nvtg-index.html';return;}
@@ -279,6 +483,33 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(!prof){location.href='nvtg-index.html';return;}
   D={id:prof.id,name:prof.full_name||'',user:prof.username||'',bio:prof.bio||'',av:prof.avatar_url||'',verified:prof.verified||false};
   render();
+  loadFriends();
+
+  // Print SQL to console for Supabase setup
+  console.log(\`
+=== ВЫПОЛНИ В SUPABASE SQL EDITOR ===
+
+CREATE TABLE IF NOT EXISTS friendships (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  requester_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  addressee_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  status text DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined')),
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(requester_id, addressee_id)
+);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_private boolean DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_friendships_req ON friendships(requester_id);
+CREATE INDEX IF NOT EXISTS idx_friendships_addr ON friendships(addressee_id);
+
+-- RLS policies
+ALTER TABLE friendships ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "view own friendships" ON friendships FOR SELECT USING (auth.uid()=requester_id OR auth.uid()=addressee_id);
+CREATE POLICY "insert friendship" ON friendships FOR INSERT WITH CHECK (auth.uid()=requester_id);
+CREATE POLICY "update friendship" ON friendships FOR UPDATE USING (auth.uid()=addressee_id);
+CREATE POLICY "delete friendship" ON friendships FOR DELETE USING (auth.uid()=requester_id OR auth.uid()=addressee_id);
+
+=====================================
+  \`);
 });
 </script>
 </body>

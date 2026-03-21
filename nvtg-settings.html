@@ -31,7 +31,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   .bur{display:flex!important}
 }
 .sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:34px;height:34px;background:var(--b);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark{width:34px;height:34px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
 .sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
@@ -148,7 +148,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   <!-- SIDEBAR -->
   <div id="sb">
     <div class="sbh">
-      <div class="sbmark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="18" r="3.5" fill="#1e50ff"/></svg></div>
+      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="18" height="18"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
       <div class="sbnm">NV<span>TG</span></div>
     </div>
     <nav class="sbnav">
@@ -246,8 +246,9 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
               <div class="scale-thumb" id="sthumb"></div>
             </div>
             <div class="scale-marks">
-              <span>75%</span><span>100%</span><span>125%</span><span>150%</span>
+              <span>75%</span><span>100%</span><span>150%</span><span>200%</span>
             </div>
+            <button onclick="saveScale()" style="margin-top:12px;width:100%;padding:10px;background:var(--b);color:#fff;border:none;border-radius:10px;font:700 .9rem 'Manrope',sans-serif;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--b2)'" onmouseout="this.style.background='var(--b)'">Сохранить масштаб</button>
           </div>
         </div>
       </div>
@@ -340,16 +341,64 @@ function openLang(){
 function closeLang(){
   Q('lov').classList.remove('on');
 }
+const I18N = {
+  ru: {
+    settings:'Настройки', account:'Аккаунт', myaccount:'Мой аккаунт',
+    nameuserphoto:'Имя, юзернейм, фото', appearance:'Отображение',
+    language:'Язык', scale:'Масштаб интерфейса', online:'в сети',
+    chats:'Чаты', myprofile:'Мой профиль', favorites:'Избранное', logout:'Выйти',
+    textsize:'Размер текста', savescale:'Сохранить масштаб', chooselang:'Выберите язык', cancel:'Отмена'
+  },
+  en: {
+    settings:'Settings', account:'Account', myaccount:'My Account',
+    nameuserphoto:'Name, username, photo', appearance:'Appearance',
+    language:'Language', scale:'Interface Scale', online:'online',
+    chats:'Chats', myprofile:'My Profile', favorites:'Favorites', logout:'Logout',
+    textsize:'Text Size', savescale:'Save scale', chooselang:'Choose language', cancel:'Cancel'
+  }
+};
+function applyI18n(l){
+  const t=I18N[l]||I18N.ru;
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  try{
+    document.querySelector('.tttl').textContent=t.settings;
+    document.querySelector('#ust').textContent=t.online;
+    // Sidebar
+    const sis=document.querySelectorAll('.si span');
+    if(sis[0]) sis[0].textContent=t.chats;
+    if(sis[1]) sis[1].textContent=t.myprofile;
+    if(sis[2]) sis[2].textContent=t.favorites;
+    if(sis[4]) sis[4].textContent=t.logout;
+    // Cards
+    const sects=document.querySelectorAll('.slbl');
+    if(sects[0]) sects[0].textContent=t.account;
+    if(sects[1]) sects[1].textContent=t.appearance;
+    // Rows
+    const rows=document.querySelectorAll('.rlt');
+    if(rows[0]) rows[0].textContent=t.myaccount;
+    if(rows[1]) rows[1].textContent=t.nameuserphoto;
+    if(rows[2]) rows[2].textContent=t.language;
+    if(rows[3]) rows[3].textContent=t.scale;
+    // Modal title
+    const lmtl=document.querySelector('.lmtl');if(lmtl)lmtl.textContent=t.chooselang;
+    const lcanc=document.querySelector('.lcanc');if(lcanc)lcanc.textContent=t.cancel;
+    // Scale
+    const sl=document.querySelector('.scale-lbl');if(sl)sl.textContent=t.textsize;
+    const sb2=document.querySelector('button[onclick="saveScale()"]');if(sb2)sb2.textContent=t.savescale;
+  }catch(e){}
+}
 function setLang(l){
   curLang = l;
   localStorage.setItem('nvtg_lang', l);
   renderLang();
+  applyI18n(l);
   setTimeout(closeLang, 220);
   showToast(l==='ru' ? 'Язык: Русский' : 'Language: English');
 }
 
 // ── SCALE ──
-const SCALE_MIN = 75, SCALE_MAX = 150;
+const SCALE_MIN = 75, SCALE_MAX = 200;
 let curScale = parseInt(localStorage.getItem('nvtg_scale') || '100');
 let scaleEnabled = localStorage.getItem('nvtg_scale_on') === '1';
 
@@ -417,10 +466,25 @@ function showToast(msg){
   toastTimer = setTimeout(()=>Q('toast').classList.remove('on'), 1800);
 }
 
+// ── SAVE SCALE ──
+function saveScale(){
+  localStorage.setItem('nvtg_scale', curScale);
+  localStorage.setItem('nvtg_scale_on', scaleEnabled ? '1' : '0');
+  showToast('Масштаб сохранён: ' + curScale + '%');
+}
+
+// ── CENTER AVATAR in hero ──
+// Add center style to uhero
+document.addEventListener('DOMContentLoaded', ()=>{
+  const uhero=document.getElementById && document.querySelector && document.querySelector('.uhero');
+  if(uhero){uhero.style.justifyContent='flex-start';}
+});
+
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', ()=>{
   renderUser('Пользователь','','');
   renderLang();
+  applyI18n(curLang);
   renderScale();
   loadFromSupabase();
 });

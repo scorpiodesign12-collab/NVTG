@@ -16,7 +16,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 #splash.hide{animation:splashOut .55s cubic-bezier(.4,0,.2,1) forwards}
 @keyframes splashOut{to{opacity:0;transform:scale(1.04)}}
 .sp-logo{display:flex;align-items:center;gap:14px;animation:fadeUp .6s cubic-bezier(.22,.9,.36,1) .1s both}
-.sp-mark{width:58px;height:58px;background:var(--blue);border-radius:16px;display:flex;align-items:center;justify-content:center}
+.sp-mark{width:58px;height:58px;background:transparent;border-radius:16px;display:flex;align-items:center;justify-content:center}
 .sp-mark svg{width:30px;height:30px}
 .sp-name{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:#fff;letter-spacing:-.04em}
 .sp-name span{color:#6b8fff}
@@ -29,7 +29,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 @keyframes spinA{to{transform:rotate(360deg)}}
 .wrap{position:relative;z-index:1;width:100%;max-width:440px;animation:fadeUp .45s cubic-bezier(.22,.9,.36,1) .1s both}
 .logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.8rem}
-.logo-mark{width:42px;height:42px;background:var(--navy);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark{width:42px;height:42px;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-mark svg{width:22px;height:22px}
 .logo-name{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;color:var(--navy);letter-spacing:-.03em}
 .logo-name span{color:var(--blue)}
@@ -97,7 +97,7 @@ input[type=text]:focus~.il,input[type=password]:focus~.il{color:var(--blue)}
 <body>
 <div id="splash">
   <div class="sp-logo">
-    <div class="sp-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="18" r="3.5" fill="#fff"/></svg></div>
+    <div class="sp-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="30" height="30"><defs><linearGradient id="blGi2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGi2)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
     <div class="sp-name">NV<span>TG</span></div>
   </div>
   <div class="sp-sub">Мессенджер нового поколения</div>
@@ -106,7 +106,7 @@ input[type=text]:focus~.il,input[type=password]:focus~.il{color:var(--blue)}
 
 <div class="wrap">
   <div class="logo">
-    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="18" r="3.5" fill="#1e50ff"/></svg></div>
+    <div class="logo-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="22" height="22"><defs><linearGradient id="blGi1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGi1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
     <div class="logo-name">NV<span>TG</span></div>
   </div>
 
@@ -231,7 +231,10 @@ async function doReg(){
   const pass=document.getElementById('rp1').value;
   try {
     // Проверяем уникальность username (без @)
-    const {data:exist}=await sb.from('profiles').select('id').eq('username',rawu).maybeSingle();
+    // Зарезервированные имена
+    const RESERVED=['nik','nvtg','admin','support','system','root','nikita'];
+    if(RESERVED.includes(rawu)){document.getElementById('err2').textContent='Этот юзернейм недоступен';btn.disabled=false;document.getElementById('rb-s').style.display='none';document.getElementById('rb-l').textContent='Создать аккаунт';shake();return;}
+    const {data:exist}=await sb.from('profiles').select('id').ilike('username',rawu).maybeSingle();
     if(exist){document.getElementById('err2').textContent='Этот юзернейм уже занят';btn.disabled=false;document.getElementById('rb-s').style.display='none';document.getElementById('rb-l').textContent='Создать аккаунт';shake();return;}
     const {data,error}=await sb.auth.signUp({email,password:pass});
     if(error) throw error;
