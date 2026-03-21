@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script>
+(function(){
+  try{
+    const scaleOn=localStorage.getItem('nvtg_scale_on')==='1';
+    const scale=parseInt(localStorage.getItem('nvtg_scale')||'100');
+    if(scaleOn && scale!==100){
+      document.addEventListener('DOMContentLoaded',()=>{
+        document.body.style.zoom=scale/100;
+        document.documentElement.style.fontSize=(scale/100*16)+'px';
+      });
+    }
+  }catch(e){}
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,interactive-widget=resizes-content">
 <title>NVTG — Настройки</title>
@@ -31,7 +45,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   .bur{display:flex!important}
 }
 .sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:36px;height:36px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark{width:38px;height:38px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
 .sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
@@ -148,7 +162,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   <!-- SIDEBAR -->
   <div id="sb">
     <div class="sbh">
-      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="34" height="34"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
+      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="36" height="36"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
       <div class="sbnm">NV<span>TG</span></div>
     </div>
     <nav class="sbnav">
@@ -472,7 +486,15 @@ function showToast(msg){
 function saveScale(){
   localStorage.setItem('nvtg_scale', curScale);
   localStorage.setItem('nvtg_scale_on', scaleEnabled ? '1' : '0');
-  showToast('Масштаб сохранён: ' + curScale + '%');
+  // Apply immediately
+  if(scaleEnabled){
+    document.body.style.zoom = curScale/100;
+    document.documentElement.style.fontSize = (curScale/100*16)+'px';
+  } else {
+    document.body.style.zoom = '';
+    document.documentElement.style.fontSize = '';
+  }
+  showToast('Масштаб сохранён: ' + curScale + '% — вступит в силу на всех страницах');
 }
 
 // ── CENTER AVATAR in hero ──
