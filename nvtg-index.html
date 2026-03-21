@@ -15,6 +15,14 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 #splash{position:fixed;inset:0;z-index:999;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #splash.hide{animation:splashOut .55s cubic-bezier(.4,0,.2,1) forwards}
 @keyframes splashOut{to{opacity:0;transform:scale(1.04)}}
+@keyframes moveGrid{0%{background-position:center 0}100%{background-position:center 40px}}
+@keyframes pulseGlow{from{transform:translate(-50%,-50%) scale(.8);opacity:.5}to{transform:translate(-50%,-50%) scale(1.2);opacity:1}}
+@keyframes cinematicDrop{0%{transform:scale(3) translateY(-100px);opacity:0;filter:blur(20px)}50%{opacity:1;filter:blur(5px)}100%{transform:scale(1) translateY(0);filter:blur(0)}}
+@keyframes blast{0%{transform:translate(-50%,-50%) scale(.9);opacity:1;border-width:8px}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0;border-width:0}}
+@keyframes drawLaser{to{stroke-dashoffset:0}}
+@keyframes fillBubble{to{fill:#fff;stroke-width:0}}
+@keyframes shimmer{to{background-position:200% center}}
+@keyframes scan{0%{left:-30%}50%{left:100%}100%{left:-30%}}
 .sp-logo{display:flex;align-items:center;gap:14px;animation:fadeUp .6s cubic-bezier(.22,.9,.36,1) .1s both}
 .sp-mark{width:58px;height:58px;background:transparent;border-radius:16px;display:flex;align-items:center;justify-content:center}
 .sp-mark svg{width:30px;height:30px}
@@ -29,7 +37,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 @keyframes spinA{to{transform:rotate(360deg)}}
 .wrap{position:relative;z-index:1;width:100%;max-width:440px;animation:fadeUp .45s cubic-bezier(.22,.9,.36,1) .1s both}
 .logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.8rem}
-.logo-mark{width:42px;height:42px;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark{width:52px;height:52px;background:transparent;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-mark svg{width:22px;height:22px}
 .logo-name{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;color:var(--navy);letter-spacing:-.03em}
 .logo-name span{color:var(--blue)}
@@ -95,18 +103,26 @@ input[type=text]:focus~.il,input[type=password]:focus~.il{color:var(--blue)}
 </style>
 </head>
 <body>
-<div id="splash">
-  <div class="sp-logo">
-    <div class="sp-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="30" height="30"><defs><linearGradient id="blGi2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGi2)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
-    <div class="sp-name">NV<span>TG</span></div>
+<div id="splash" style="position:fixed;inset:0;z-index:999;background:#050914;background-image:linear-gradient(rgba(0,162,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,162,255,.04) 1px,transparent 1px);background-size:40px 40px;animation:moveGrid 15s linear infinite;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">
+  <div style="position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(0,85,255,.15) 0%,transparent 60%);top:50%;left:50%;transform:translate(-50%,-50%);animation:pulseGlow 4s ease-in-out infinite alternate"></div>
+  <div style="position:relative;width:120px;height:120px;animation:cinematicDrop 1.2s cubic-bezier(.16,1,.3,1) forwards;z-index:2">
+    <div style="position:absolute;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%) scale(.5);border-radius:35px;border:4px solid #00A2FF;opacity:0;box-shadow:0 0 20px #00A2FF,inset 0 0 20px #00A2FF;animation:blast 1s ease-out forwards 1.2s"></div>
+    <svg style="width:100%;height:100%;filter:drop-shadow(0 20px 30px rgba(0,162,255,.4))" xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400">
+      <defs><linearGradient id="spGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0044FF"/></linearGradient></defs>
+      <rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#spGrad)"/>
+      <path pathLength="100" d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="transparent" stroke="#fff" stroke-width="6" stroke-dasharray="100" stroke-dashoffset="100" style="animation:drawLaser 1s cubic-bezier(.4,0,.2,1) forwards 1.5s,fillBubble .5s ease-out forwards 2.5s"/>
+    </svg>
   </div>
-  <div class="sp-sub">Мессенджер нового поколения</div>
-  <div class="sp-bar"></div>
+  <div style="margin-top:32px;font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.03em;opacity:0;background:linear-gradient(90deg,#3A5B8C 0%,#fff 50%,#3A5B8C 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeUp 1s ease-out forwards 2s,shimmer 3s linear infinite 2s">NV<span style="-webkit-text-fill-color:#6b8fff">TG</span></div>
+  <div style="margin-top:8px;font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.4);opacity:0;animation:fadeUp .8s ease-out forwards 2.2s">Безопасный мессенджер</div>
+  <div style="width:180px;height:2px;background:rgba(255,255,255,.05);margin-top:22px;position:relative;overflow:hidden;opacity:0;border-radius:2px;animation:fadeUp .6s ease-out forwards 2.4s">
+    <div style="position:absolute;top:0;left:0;bottom:0;width:30%;background:#00A2FF;box-shadow:0 0 10px #00A2FF,0 0 20px #00A2FF;animation:scan 2s cubic-bezier(.4,0,.2,1) infinite"></div>
+  </div>
 </div>
 
 <div class="wrap">
   <div class="logo">
-    <div class="logo-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="22" height="22"><defs><linearGradient id="blGi1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGi1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
+    <div class="logo-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="52" height="52"><defs><linearGradient id="blGi1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGi1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
     <div class="logo-name">NV<span>TG</span></div>
   </div>
 
@@ -232,7 +248,7 @@ async function doReg(){
   try {
     // Проверяем уникальность username (без @)
     // Зарезервированные имена
-    const RESERVED=['nik','nvtg','admin','support','system','root','nikita'];
+    const RESERVED=['nik','nvtg','admin','support','system','root','nikita','kiss'];
     if(RESERVED.includes(rawu)){document.getElementById('err2').textContent='Этот юзернейм недоступен';btn.disabled=false;document.getElementById('rb-s').style.display='none';document.getElementById('rb-l').textContent='Создать аккаунт';shake();return;}
     const {data:exist}=await sb.from('profiles').select('id').ilike('username',rawu).maybeSingle();
     if(exist){document.getElementById('err2').textContent='Этот юзернейм уже занят';btn.disabled=false;document.getElementById('rb-s').style.display='none';document.getElementById('rb-l').textContent='Создать аккаунт';shake();return;}

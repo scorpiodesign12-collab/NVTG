@@ -31,7 +31,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   .bur{display:flex!important}
 }
 .sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:34px;height:34px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark{width:36px;height:36px;background:transparent;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
 .sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
@@ -148,7 +148,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
   <!-- SIDEBAR -->
   <div id="sb">
     <div class="sbh">
-      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="18" height="18"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
+      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="34" height="34"><defs><linearGradient id="blGs1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGs1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
       <div class="sbnm">NV<span>TG</span></div>
     </div>
     <nav class="sbnav">
@@ -410,8 +410,10 @@ function renderScale(){
   Q('sfill').style.width = pct + '%';
   Q('scaledisp').textContent = curScale + '%';
   if(scaleEnabled){
+    document.body.style.zoom = (curScale / 100);
     document.documentElement.style.fontSize = (curScale / 100 * 16) + 'px';
   } else {
+    document.body.style.zoom = '';
     document.documentElement.style.fontSize = '';
   }
 }
