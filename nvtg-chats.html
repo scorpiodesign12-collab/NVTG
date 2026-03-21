@@ -12,23 +12,20 @@ function applyTheme(t){
 })();
 </script>
 <script>
-// Always apply 105% zoom - consistent on all devices
+// Scale via font-size only — body.zoom breaks fixed positioning on mobile
 (function(){
   try{
-    // Check if user has custom scale in settings
     var on=localStorage.getItem('nvtg_scale_on')==='1';
-    var sc=parseInt(localStorage.getItem('nvtg_scale')||'105');
-    // Always use at least 105% as default
-    if(!on || !sc || sc < 80) sc = 105;
-    document.documentElement.style.fontSize=(sc/100*16)+'px';
-    document.addEventListener('DOMContentLoaded',function(){
-      document.body.style.zoom=sc/100;
-    });
+    var sc=parseInt(localStorage.getItem('nvtg_scale')||'100');
+    if(on && sc && sc>=80 && sc<=130){
+      document.documentElement.style.fontSize=(sc/100*16)+'px';
+    }
+    // NO body.style.zoom — it breaks position:fixed + visualViewport on iOS/Android
   }catch(e){}
 })();
 </script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,interactive-widget=resizes-content">
 <title>NVTG — Чаты</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -232,7 +229,7 @@ a.ml{color:var(--blue);text-decoration:underline;word-break:break-all}
 .pi-more{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font:700 1.2rem 'Syne',sans-serif;color:#fff}
 
 /* INPUT AREA */
-#ia{background:var(--wh);border-top:1px solid var(--brd);flex-shrink:0;display:none;flex-direction:column;position:relative;z-index:20;min-height:64px}
+#ia{background:var(--wh);border-top:1px solid var(--brd);flex-shrink:0;display:none;flex-direction:column;position:relative;z-index:20;min-height:56px}
 #strip{display:none;align-items:center;padding:8px 12px 0;gap:8px}
 #strip.on{display:flex}
 .stac{width:3px;height:34px;border-radius:2px;flex-shrink:0}
@@ -250,10 +247,10 @@ a.ml{color:var(--blue);text-decoration:underline;word-break:break-all}
 .addp{flex-shrink:0;width:68px;height:68px;border-radius:9px;border:2px dashed var(--brd);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:border-color .15s}
 .addp:hover{border-color:var(--blue);color:var(--blue)}
 /* input row */
-.ir{display:flex;align-items:flex-end;gap:6px;padding:10px 8px;padding-bottom:max(12px,env(safe-area-inset-bottom,12px));flex-wrap:nowrap}
+.ir{display:flex;align-items:flex-end;gap:6px;padding:8px 10px;padding-bottom:max(10px,env(safe-area-inset-bottom,10px));flex-wrap:nowrap}
 .abt{background:none;border:none;cursor:pointer;padding:8px;color:var(--muted);outline:none;transition:color .15s;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .abt:hover{color:var(--navy)}
-.iw{flex:1;background:var(--bg);border:1.5px solid var(--brd);border-radius:22px;display:flex;align-items:flex-end;padding:8px 10px;min-height:44px;transition:border-color .15s}
+.iw{flex:1;background:var(--bg);border:1.5px solid var(--brd);border-radius:22px;display:flex;align-items:flex-end;padding:6px 12px;min-height:40px;transition:border-color .15s}
 .iw:focus-within{border-color:var(--blue);background:#fff}
 .iw textarea{flex:1;background:transparent;border:none;outline:none;resize:none;font:500 .92rem/1.4 'Manrope',sans-serif;color:var(--navy);max-height:120px;min-height:22px;overflow-y:auto}
 .iw textarea::-webkit-scrollbar{width:0}
@@ -426,33 +423,35 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
 @media(max-width:700px){
   #pl{width:100%;border-right:none}
 
-  /* ── MOBILE CHAT PANEL ── */
+  /* ── CHAT PANEL ──
+     position:fixed fills viewport. With interactive-widget=resizes-content,
+     when keyboard appears the CONTENT viewport shrinks, so dvh units adjust.
+     We never move top/height in JS — that causes jumps. */
   #pc{
     position:fixed;
-    /* inset:0 = fills entire screen, keyboard will shrink viewport on Android */
     top:0; left:0; right:0; bottom:0;
+    height: 100dvh;
     z-index:50;
     transform:translateX(100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
     display:flex;
     flex-direction:column;
-    /* DO NOT set height — let inset:0 define it */
     overflow:hidden;
   }
   #pc.open{transform:translateX(0)}
 
-  /* Messages wrap: flex:1 so it fills remaining space after header+input */
+  /* msgs-wrap fills remaining flex space */
   #msgs-wrap{
-    flex:1;
+    flex:1 1 0;
     min-height:0;
     overflow:hidden;
     position:relative;
     display:flex;
     flex-direction:column;
   }
-  /* Messages list: scrollable, takes all space inside msgs-wrap */
+  /* scrollable messages */
   #msgs{
-    flex:1;
+    flex:1 1 0;
     overflow-y:auto;
     min-height:0;
     overscroll-behavior-y:contain;
@@ -460,15 +459,15 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     z-index:2;
     -webkit-overflow-scrolling:touch;
   }
-  /* Input bar: fixed to bottom, never moves */
+  /* Input bar — flex-shrink:0 keeps it always visible */
   #ia{
     flex-shrink:0 !important;
+    flex-grow:0 !important;
     width:100%;
     background:var(--wh);
     border-top:1px solid var(--brd);
     position:relative;
     z-index:20;
-    /* iOS home indicator safe area */
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
 
@@ -1231,6 +1230,7 @@ async function loadChats(){
       verified:prof.verified||false,
       lastText:lastMsg?(lastMsg.photos?.length?'📷 Фото':lastMsg.text):'',
       lastTs:lastMsg?new Date(lastMsg.created_at).getTime():0,
+      lastSenderId:lastMsg?lastMsg.sender_id:null,
     });
   });
   // Сортируем по последнему сообщению
@@ -1314,7 +1314,7 @@ function subscribeNewMessages(){
         }
       } else {
         const chat=CHATS.find(c=>c.id===partnerId);
-        if(chat){chat.lastText=m.photos?.length?'📷 Фото':m.text;chat.lastTs=new Date(m.created_at).getTime();}
+        if(chat){chat.lastText=m.photos?.length?'📷 Фото':m.text;chat.lastTs=new Date(m.created_at).getTime();chat.lastSenderId=m.sender_id;}
       }
       if(S.cur!==partnerId) unreadCounts[partnerId]=(unreadCounts[partnerId]||0)+1;
       if(S.cur===partnerId) await loadMessages(partnerId);
@@ -1446,7 +1446,7 @@ async function sendMessage(text,photos,replyTo,replyName){
     if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
 
     const chat=CHATS.find(c=>c.id===S.cur);
-    if(chat){chat.lastText=photos?.length?'📷 Фото':safeText;chat.lastTs=Date.now();}
+    if(chat){chat.lastText=photos?.length?'📷 Фото':safeText;chat.lastTs=Date.now();chat.lastSenderId=ME.id;}
     Z.rl();
   }catch(e){
     console.warn('sendMessage exception',e);
@@ -1669,7 +1669,11 @@ const Z={
     const mg=document.createElement('span'); mg.className='cm';
     if(c.fav) mg.textContent='Сохранённые заметки';
     else if(subHtml){mg.innerHTML=subHtml;}
-    else if(c.lastText) mg.textContent=c.lastText;
+    else if(c.lastText){
+      // Show "Вы: " prefix if last message was sent by me
+      const isMyMsg = c.lastSenderId && c.lastSenderId===ME.id;
+      mg.textContent = (isMyMsg ? 'Вы: ' : '') + c.lastText;
+    }
     else if(c.sub) mg.textContent=c.sub;
     r2.appendChild(mg);
     if(unread>0){const b=document.createElement('span');b.className='cbg';b.textContent=unread;r2.appendChild(b);}
@@ -2735,49 +2739,54 @@ function applyBg(){
 }
 // Per-chat background loaded when chat opens
 
-// ── MOBILE KEYBOARD FIX ──
-// Strategy:
-//   Android Chrome: resizes the visual viewport → bottom:0 on fixed #pc auto-adjusts ✓
-//   iOS Safari: does NOT resize viewport, scrolls it instead
-//     → We listen to visualViewport.offsetTop and adjust #pc bottom only
-//     → NEVER change top or height (that causes bg/content to jump)
-(function(){
-  if(!window.visualViewport) return;
-  var vv = window.visualViewport;
-  var lastBottom = 0;
+// ── MOBILE KEYBOARD / VIEWPORT FIX ──
+// With interactive-widget=resizes-content:
+//   - Android: content viewport shrinks when keyboard opens → 100dvh on #pc shrinks ✓
+//   - iOS Safari (< 16): doesn't support resizes-content, uses visual viewport scroll
+//
+// For iOS: we only adjust #pc bottom (NOT top/height) to avoid any visual jump.
+// The background stays completely still because it's inside msgs-wrap which doesn't move.
 
-  function onVVChange(){
+(function(){
+  if(window.innerWidth > 700) return; // only on mobile
+  var vv = window.visualViewport;
+  if(!vv) return;
+
+  var iosMode = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  var lastKb = 0;
+
+  function adjust(){
     if(window.innerWidth > 700) return;
     var pc = document.getElementById('pc');
-    if(!pc) return;
+    if(!pc || !pc.classList.contains('open')) return;
 
-    // How much the viewport has been pushed up (= keyboard height on iOS)
-    // offsetTop is how far the visual viewport has scrolled from the layout viewport
-    var kbHeight = window.innerHeight - vv.height - vv.offsetTop;
-    if(kbHeight < 0) kbHeight = 0;
-
-    // Set bottom on #pc to push the input bar up by keyboard height
-    // This does NOT move the background element (it's absolute inside #msgs-wrap)
-    if(Math.abs(kbHeight - lastBottom) > 2){
-      lastBottom = kbHeight;
-      pc.style.bottom = kbHeight + 'px';
-      // Scroll messages to bottom so last message is visible
-      var msgs = document.getElementById('msgs');
-      if(msgs && kbHeight > 50) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 100);
+    if(iosMode){
+      // iOS: keyboard pushes visual viewport up, offsetTop increases
+      var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      if(Math.abs(kb - lastKb) < 2) return;
+      lastKb = kb;
+      pc.style.bottom = kb > 10 ? kb + 'px' : '';
+      if(kb > 50){
+        var msgs = document.getElementById('msgs');
+        if(msgs) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 80);
+      }
     }
+    // Android with resizes-content: no JS needed, CSS handles it
   }
 
-  vv.addEventListener('resize', onVVChange, {passive:true});
-  vv.addEventListener('scroll', onVVChange, {passive:true});
+  vv.addEventListener('resize', adjust, {passive:true});
+  vv.addEventListener('scroll', adjust, {passive:true});
+
   window.addEventListener('orientationchange', function(){
-    setTimeout(function(){ lastBottom = -1; onVVChange(); }, 300);
+    lastKb = -1;
+    setTimeout(adjust, 400);
   });
 })();
 
-// Called when opening a chat — no layout changes needed, just scroll
 function fixPCLayout(){
+  // Just scroll to bottom when chat opens
   var msgs = document.getElementById('msgs');
-  if(msgs) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 80);
+  if(msgs) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 60);
 }
 </script>
 
