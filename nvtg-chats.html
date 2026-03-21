@@ -10,6 +10,7 @@ function applyTheme(t){
 (function(){
   try{ var t=localStorage.getItem('nvtg_theme')||'light'; applyTheme(t); }catch(e){}
 })();
+</script>
 <script>
 (function(){
   try{
@@ -1620,8 +1621,13 @@ const Z={
       const vb=document.createElement('span');vb.className='vbdg';
       vb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="#1e50ff"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       nmWrap.appendChild(vb);
-      const badges=getRoleBadges(c.username);
-      if(badges){const bd=document.createElement('span');bd.innerHTML=badges;nmWrap.appendChild(bd);}
+      const _badgeHtml=getRoleBadges(c.username);
+      if(_badgeHtml){
+        const _bd=document.createElement('span');
+        _bd.style.cssText='display:inline-flex;align-items:center;gap:2px;flex-shrink:0';
+        _bd.innerHTML=_badgeHtml;
+        nmWrap.appendChild(_bd);
+      }
     }
     if(c.lastTs){const tm=document.createElement('span');tm.className='ctime';tm.textContent=ft(c.lastTs);r1.append(nmWrap,tm);}
     else r1.append(nmWrap);
@@ -2269,22 +2275,28 @@ function saveChatBg(chatId){
 function applyBgNow(){
   const el = document.getElementById('chat-bg');
   if(!el) return;
-  if(!bgState.url){ el.style.backgroundImage=''; el.style.opacity='0'; return; }
-  let style = `url('${bgState.url}')`;
-  el.style.backgroundImage = style;
+  if(!bgState.url){ 
+    el.style.cssText='background:none;opacity:0;filter:none';
+    const ov=document.getElementById('chat-bg-overlay');
+    if(ov)ov.style.background='transparent';
+    return; 
+  }
+  el.style.backgroundImage = `url('${bgState.url}')`;
   el.style.backgroundSize = 'cover';
   el.style.backgroundPosition = 'center';
   el.style.opacity = '1';
-  el.style.filter = bgState.blur ? 'blur(6px) scale(1.05)' : '';
+  // BLUR — apply filter with scale to avoid white edges
+  el.style.filter = bgState.blur ? 'blur(8px)' : 'none';
+  el.style.transform = bgState.blur ? 'scale(1.08)' : 'none';
   // Dark overlay
-  const overlay = document.getElementById('chat-bg-overlay') || (() => {
-    const o = document.createElement('div');
-    o.id = 'chat-bg-overlay';
-    o.style.cssText = 'position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .3s';
+  let overlay = document.getElementById('chat-bg-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'chat-bg-overlay';
+    overlay.style.cssText = 'position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .3s';
     const wrap = document.getElementById('msgs-wrap');
-    if(wrap) wrap.insertBefore(o, wrap.firstChild);
-    return o;
-  })();
+    if(wrap) wrap.appendChild(overlay);
+  }
   overlay.style.background = bgState.dark ? `rgba(0,0,0,${bgState.darkVal/100})` : 'transparent';
 }
 function openBgPicker(){
@@ -2315,7 +2327,14 @@ function closeBgPicker(){
   document.getElementById('bgov').classList.remove('on');
   if(S.cur) saveChatBg(S.cur);
 }
-function clearChatBg(){ bgState={url:null,blur:false,dark:false,darkVal:40}; applyBgNow(); document.querySelectorAll('.bg-opt').forEach(x=>x.classList.remove('sel')); document.querySelector('.bg-opt-none')?.classList.add('sel'); }
+function clearChatBg(){ 
+  bgState={url:null,blur:false,dark:false,darkVal:40}; 
+  applyBgNow(); 
+  document.querySelectorAll('.bg-opt').forEach(x=>x.classList.remove('sel')); 
+  const none=document.querySelector('.bg-opt-none');
+  if(none) none.classList.add('sel');
+  if(S.cur) saveChatBg(S.cur);
+}
 function toggleBgBlur(){ bgState.blur=!bgState.blur; document.getElementById('bg-blur-btn').classList.toggle('active',bgState.blur); applyBgNow(); }
 function toggleBgDark(){ bgState.dark=!bgState.dark; document.getElementById('bg-dark-btn').classList.toggle('active',bgState.dark); document.getElementById('bg-dark-row').classList.toggle('on',bgState.dark); applyBgNow(); }
 function applyBgDark(v){ bgState.darkVal=v; applyBgNow(); }

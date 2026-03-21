@@ -10,6 +10,7 @@ function applyTheme(t){
 (function(){
   try{ var t=localStorage.getItem('nvtg_theme')||'light'; applyTheme(t); }catch(e){}
 })();
+</script>
 <script>
 (function(){
   try{
@@ -713,18 +714,18 @@ function showToast(msg){
 
 // ── SAVE SCALE ──
 function saveScale(){
-  localStorage.setItem('nvtg_scale', curScale);
+  localStorage.setItem('nvtg_scale', String(curScale));
   localStorage.setItem('nvtg_scale_on', scaleEnabled ? '1' : '0');
   applyScaleNow();
-  showToast('Масштаб ' + curScale + '% сохранён');
+  showToast('Масштаб ' + curScale + '% сохранён ✓');
 }
 function applyScaleNow(){
-  if(scaleEnabled && curScale !== 100){
+  if(scaleEnabled){
     document.documentElement.style.fontSize = (curScale/100*16) + 'px';
-    document.body.style.zoom = String(curScale/100);
+    document.body.style.zoom = curScale/100;
   } else {
     document.documentElement.style.fontSize = '';
-    document.body.style.zoom = '';
+    document.body.style.zoom = 1;
   }
 }
 

@@ -10,6 +10,7 @@ function applyTheme(t){
 (function(){
   try{ var t=localStorage.getItem('nvtg_theme')||'light'; applyTheme(t); }catch(e){}
 })();
+</script>
 <script>
 (function(){
   try{
@@ -523,11 +524,11 @@ html.dark .badge-prem{background:rgba(77,139,255,.18);color:#4d8bff}
       <!-- PRIVATE ACCOUNT (only for verified) -->
       <div class="card" id="priv-card" style="display:none">
         <div class="slbl">Безопасность</div>
-        <div class="priv-row" onclick="togglePrivate()">
+        <div class="priv-row">
           <div class="ric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <div style="flex:1;min-width:0"><div class="rl">Приватный аккаунт</div><div class="rv" style="color:var(--m);font-size:.78rem;margin-top:2px">Только разрешённые могут писать</div></div>
           <label class="tog" onclick="event.stopPropagation()">
-            <input type="checkbox" id="privtog" onchange="togglePrivate()">
+            <input type="checkbox" id="privtog" onchange="togglePrivate()" onclick="event.stopPropagation()">
             <span class="tslider"></span>
           </label>
         </div>
