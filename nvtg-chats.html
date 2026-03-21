@@ -12,23 +12,23 @@ function applyTheme(t){
 })();
 </script>
 <script>
+// Always apply 105% zoom - consistent on all devices
 (function(){
   try{
+    // Check if user has custom scale in settings
     var on=localStorage.getItem('nvtg_scale_on')==='1';
-    var sc=parseInt(localStorage.getItem('nvtg_scale')||'100');
-    if(on && sc && sc!==100){
-      document.documentElement.style.fontSize=(sc/100*16)+'px';
-      // zoom applied after body exists
-      document.addEventListener('DOMContentLoaded',function(){
-        document.body.style.zoom=sc/100;
-      });
-    }
+    var sc=parseInt(localStorage.getItem('nvtg_scale')||'105');
+    // Always use at least 105% as default
+    if(!on || !sc || sc < 80) sc = 105;
+    document.documentElement.style.fontSize=(sc/100*16)+'px';
+    document.addEventListener('DOMContentLoaded',function(){
+      document.body.style.zoom=sc/100;
+    });
   }catch(e){}
 })();
 </script>
-</script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>NVTG — Чаты</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -419,7 +419,7 @@ mark.hl{background:#fff176;border-radius:3px;color:var(--navy)}
     max-height:100dvh;
   }
   #pc.open{transform:translateX(0)}
-  #ia{flex-shrink:0;position:relative;z-index:10;width:100%;background:var(--wh);border-top:1px solid var(--brd)}
+  #ia{flex-shrink:0;position:relative;z-index:10;width:100%;background:var(--wh);border-top:1px solid var(--brd);-webkit-transform:translateZ(0);transform:translateZ(0)}
   #msgs{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain;position:relative;z-index:2}
   .back{display:flex}
   #nc{display:none}
@@ -892,7 +892,7 @@ html.dark .bg-ctrl-btn { border-color:#2a2d3e;color:#e4e7f4 }
 <div id="hm">
   <div class="hmi" onclick="openBgPicker()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Фон чата</span></div>
   <div class="hmi" onclick="Z.ha('prof')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Показать профиль</span></div>
-  <div class="hmi" onclick="openBgModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l3 3 3-3 3 3 3-3 3 3"/></svg><span>Фон чата</span></div>
+
   <div class="hmi red" onclick="Z.ha('del')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg><span>Удалить чат</span></div>
 </div>
 
@@ -1720,7 +1720,8 @@ const Z={
       chs.textContent=c.fav?'Личные заметки':'';chs.className='chs';
     }
     Z.upb(); S.photos=[]; Z.uph(); Z.cs();
-    if(id!=='fav')loadChatBg(makeChatId(ME.id,id)); else loadChatBg('fav');
+    const _bgChatKey = (id==='fav') ? 'fav' : makeChatId(ME.id,id);
+    loadChatBg(_bgChatKey);
     const tb=Q('typing-bar');if(tb)tb.style.display='none';
     currentMsgs=[];
     if(c.fav){
@@ -1741,6 +1742,9 @@ const Z={
   },
   bl(){
     Q('pc').classList.remove('open');S.cur=null;
+    // Clear background when leaving chat
+    bgState={url:null,blur:false,dark:false,darkVal:40};
+    applyBgNow();
     if(chatSub){sb.removeChannel(chatSub);chatSub=null;}
     if(reactionSub){sb.removeChannel(reactionSub);reactionSub=null;}
     if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
@@ -2264,13 +2268,20 @@ let bgState = {url:null, blur:false, dark:false, darkVal:40};
 
 function loadChatBg(chatId){
   try{
+    // Always reset first to prevent previous chat's bg showing
+    bgState={url:null,blur:false,dark:false,darkVal:40};
+    applyBgNow();
     const saved = JSON.parse(localStorage.getItem('nvtg_bg_'+chatId)||'null');
-    if(saved){ bgState={...bgState,...saved}; applyBgNow(); }
-    else { bgState={url:null,blur:false,dark:false,darkVal:40}; applyBgNow(); }
-  }catch(e){}
+    if(saved && saved.url){ 
+      bgState={...bgState,...saved}; 
+      applyBgNow(); 
+    }
+  }catch(e){ bgState={url:null,blur:false,dark:false,darkVal:40}; applyBgNow(); }
 }
 function saveChatBg(chatId){
-  try{ localStorage.setItem('nvtg_bg_'+chatId, JSON.stringify(bgState)); }catch(e){}
+  try{ 
+    if(chatId) localStorage.setItem('nvtg_bg_'+chatId, JSON.stringify(bgState)); 
+  }catch(e){}
 }
 function applyBgNow(){
   const el = document.getElementById('chat-bg');
@@ -2300,6 +2311,7 @@ function applyBgNow(){
   overlay.style.background = bgState.dark ? `rgba(0,0,0,${bgState.darkVal/100})` : 'transparent';
 }
 function openBgPicker(){
+  Z.hhm(); // Close the header menu first
   document.getElementById('bgov').classList.add('on');
   const grid = document.getElementById('bg-grid');
   grid.innerHTML = '';
@@ -2325,7 +2337,11 @@ function openBgPicker(){
 }
 function closeBgPicker(){
   document.getElementById('bgov').classList.remove('on');
-  if(S.cur) saveChatBg(S.cur);
+  // Save bg for the correct key (chatId for real chats, 'fav' for favourites)
+  if(S.cur){
+    const chatKey = (S.cur==='fav') ? 'fav' : makeChatId(ME.id, S.cur);
+    saveChatBg(chatKey);
+  }
 }
 function clearChatBg(){ 
   bgState={url:null,blur:false,dark:false,darkVal:40}; 
@@ -2671,67 +2687,60 @@ function applyBg(){
   }
   closeBgModal();
 }
-function loadSavedBg(){
-  try{
-    const saved=JSON.parse(localStorage.getItem('nvtg_chatbg')||'null');
-    if(!saved||!saved.img) return;
-    _bgImg=saved.img;_bgStyle=saved.style||'none';_bgDark=saved.dark||50;
-    const idx=BG_STOCKS.indexOf(saved.img);_bgSelIdx=idx;
-    applyBg();
-  }catch(e){}
-}
-window.addEventListener('DOMContentLoaded',()=>setTimeout(loadSavedBg,500));
+// Per-chat background loaded when chat opens
 
 // ── MOBILE KEYBOARD FIX ──
-// Mobile keyboard / viewport fix
+// Mobile keyboard / viewport fix - works with zoom
 if(window.visualViewport){
   function fixLayout(){
     const pc=document.getElementById('pc');
     if(!pc||!pc.classList.contains('open')) return;
-    const h=window.visualViewport.height;
-    const t=window.visualViewport.offsetTop;
+    // Use visualViewport to get the actual visible area accounting for keyboard and zoom
+    const vv=window.visualViewport;
+    const zoomFactor = vv.scale || 1;
+    // Height and offset accounting for zoom
+    const h=vv.height;
+    const t=vv.offsetTop;
     pc.style.height=h+'px';
     pc.style.top=t+'px';
     pc.style.bottom='auto';
+    pc.style.position='fixed';
+    // Ensure input area is visible
+    const ia=document.getElementById('ia');
+    if(ia){
+      ia.style.position='relative';
+      ia.style.zIndex='20';
+    }
   }
   window.visualViewport.addEventListener('resize',fixLayout,{passive:true});
   window.visualViewport.addEventListener('scroll',fixLayout,{passive:true});
+  // Also fix on orientation change
+  window.addEventListener('orientationchange',()=>setTimeout(fixLayout,300));
 }
+// Extra fix: when textarea is focused on mobile, scroll it into view
+document.addEventListener('DOMContentLoaded',function(){
+  const ta=document.getElementById('ta');
+  if(ta){
+    ta.addEventListener('focus',function(){
+      if(window.innerWidth<=700){
+        setTimeout(()=>{
+          const ia=document.getElementById('ia');
+          if(ia) ia.scrollIntoView({block:'end',behavior:'smooth'});
+          if(window.visualViewport){
+            const pc=document.getElementById('pc');
+            if(pc&&pc.classList.contains('open')){
+              const vv=window.visualViewport;
+              pc.style.height=vv.height+'px';
+              pc.style.top=vv.offsetTop+'px';
+            }
+          }
+        },300);
+      }
+    });
+  }
+});
 </script>
 
-<!-- CHAT BACKGROUND MODAL -->
-<div id="bgov" onclick="if(event.target===this)closeBgModal()">
-  <div id="bgbox">
-    <div class="bg-hdr">
-      <span class="bg-ttl">Фон чата</span>
-      <button class="bg-cl" onclick="closeBgModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="bg-scr">
-      <div class="bg-sect">Стиль</div>
-      <div class="bg-opts">
-        <div class="bg-opt" id="bgopt-none" onclick="setBgStyle('none')">
-          <div class="bg-opt-name">Нет</div>
-          <div class="bg-opt-sub">Стандартный</div>
-        </div>
-        <div class="bg-opt" id="bgopt-blur" onclick="setBgStyle('blur')">
-          <div class="bg-opt-name">Блюр</div>
-          <div class="bg-opt-sub">Размытие</div>
-        </div>
-        <div class="bg-opt" id="bgopt-dark" onclick="setBgStyle('dark')">
-          <div class="bg-opt-name">Тёмный</div>
-          <div class="bg-opt-sub">Затемнение</div>
-        </div>
-      </div>
-      <div class="bg-slider-row" id="bg-dark-row" style="display:none">
-        <div class="bg-sl-lbl"><span>Затемнение</span><span id="bg-dark-val">50%</span></div>
-        <input type="range" min="10" max="90" value="50" id="bg-dark-r" oninput="setBgDarkness(this.value)" style="width:100%;height:4px;-webkit-appearance:none;background:var(--brd);border-radius:4px;outline:none">
-      </div>
-      <div class="bg-sect">Изображения</div>
-      <div class="bg-imgs" id="bg-imgs-grid"></div>
-      <button onclick="applyBg()" style="width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:12px;font:700 .92rem Manrope,sans-serif;cursor:pointer;margin-top:4px">Применить</button>
-    </div>
-  </div>
-</div>
 
 <!-- CHAT BACKGROUND MODAL -->
 <div id="bgov" onclick="if(event.target===this)closeBgPicker()">

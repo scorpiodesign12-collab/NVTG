@@ -15,14 +15,13 @@ function applyTheme(t){
 (function(){
   try{
     var on=localStorage.getItem('nvtg_scale_on')==='1';
-    var sc=parseInt(localStorage.getItem('nvtg_scale')||'100');
-    if(on && sc && sc!==100){
-      document.documentElement.style.fontSize=(sc/100*16)+'px';
-      // zoom applied after body exists
-      document.addEventListener('DOMContentLoaded',function(){
-        document.body.style.zoom=sc/100;
-      });
-    }
+    var sc=parseInt(localStorage.getItem('nvtg_scale')||'105');
+    if(!on || !sc || sc < 80) sc = 105;
+    document.documentElement.style.fontSize=(sc/100*16)+'px';
+    // zoom applied after body exists
+    document.addEventListener('DOMContentLoaded',function(){
+      document.body.style.zoom=sc/100;
+    });
   }catch(e){}
 })();
 </script>
