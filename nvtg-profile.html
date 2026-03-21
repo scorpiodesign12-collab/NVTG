@@ -1,23 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script>
-// Apply saved scale & language on every page load
-(function(){
-  try{
-    const scaleOn=localStorage.getItem('nvtg_scale_on')==='1';
-    const scale=parseInt(localStorage.getItem('nvtg_scale')||'100');
-    if(scaleOn && scale!==100){
-      document.documentElement.style.fontSize=(scale/100*16)+'px';
-      document.body && (document.body.style.zoom=scale/100);
-      // Apply after body exists
-      document.addEventListener('DOMContentLoaded',()=>{
-        document.body.style.zoom=scale/100;
-      });
-    }
-  }catch(e){}
-})();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,interactive-widget=resizes-content">
 <title>NVTG — Профиль</title>
@@ -35,7 +18,7 @@ html,body{height:100%;font-family:'Manrope',sans-serif;background:#f0f3ff;color:
 #sb.open{transform:translateX(0)}
 @media(min-width:701px){#sb{position:fixed;box-shadow:6px 0 30px rgba(0,0,0,.2)}.bur{display:flex!important}}
 .sbh{height:56px;padding:0 16px;background:rgba(255,255,255,.05);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.sbmark{width:40px;height:40px;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbmark{width:38px;height:38px;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sbmark svg{width:18px;height:18px}
 .sbnm{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.03em}
 .sbnm span{color:#6b8fff}
@@ -174,7 +157,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 <div id="app">
   <div id="sb">
     <div class="sbh">
-      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="38" height="38"><defs><linearGradient id="blGp1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGp1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
+      <div class="sbmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 400 400" width="36" height="36"><defs><linearGradient id="blGp1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00A2FF"/><stop offset="100%" stop-color="#0055FF"/></linearGradient></defs><rect x="50" y="50" width="400" height="400" rx="95" ry="95" fill="url(#blGp1)"/><path d="M265 140 A110 110 0 1 1 187 327 C170 345 140 355 125 360 C140 340 150 320 157 295 A110 110 0 0 1 265 140 Z" fill="#FFFFFF"/></svg></div>
       <div class="sbnm">NV<span>TG</span></div>
     </div>
     <nav class="sbnav">
@@ -339,7 +322,6 @@ async function saveProfile(){
   const bio=Q('ebio').value;
   D.name=name;D.bio=bio;
   await sb.from('profiles').update({full_name:name,bio}).eq('id',D.id);
-  try{localStorage.setItem('nvtg_profile_cache',JSON.stringify(D));}catch(e){}
   Q('eov').classList.remove('on');render();
 }
 
@@ -499,22 +481,11 @@ async function togglePrivate(){
 }
 
 window.addEventListener('DOMContentLoaded',async()=>{
-  // Fast path: show cached data immediately
-  try{
-    const cached=JSON.parse(localStorage.getItem('nvtg_profile_cache')||'null');
-    if(cached){D={...cached};render();}
-  }catch(e){}
-  
   const {data:{user}}=await sb.auth.getUser();
   if(!user){location.href='nvtg-index.html';return;}
-  
-  // Load profile with timeout
-  const profPromise=sb.from('profiles').select('id,full_name,username,bio,avatar_url,verified').eq('id',user.id).single();
-  const {data:prof}=await profPromise;
-  if(!prof){location.href='nvtg-index.html';return;}
+  const {data:prof,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  if(error||!prof){location.href='nvtg-index.html';return;}
   D={id:prof.id,name:prof.full_name||'',user:prof.username||'',bio:prof.bio||'',av:prof.avatar_url||'',verified:prof.verified||false};
-  // Cache for next time
-  try{localStorage.setItem('nvtg_profile_cache',JSON.stringify(D));}catch(e){}
   render();
   loadFriends();
 
