@@ -9,6 +9,10 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text!important;user-select:text!important}
 html,body{height:100%;font-family:'DM Sans',sans-serif;overflow:hidden;font-size:16px}
+/* Perf: disable heavy effects on slow devices */
+@media (prefers-reduced-motion: reduce) {
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
 :root{
   --navy:#111111;
   --blue:#e8e8e8;
@@ -381,14 +385,14 @@ mark.hl{background:rgba(255,230,50,.3);border-radius:3px;color:#fff}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes vblink{0%,100%{opacity:1}50%{opacity:.2}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-/* Voice message bubble */
-.vmsg{display:flex;align-items:center;gap:8px;padding:8px 12px 4px;min-width:160px}
-.vmsg-play{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
-.vmsg-play:hover{background:rgba(255,255,255,.32)}
-.vmsg-play svg{width:14px;height:14px;color:#fff}
-.vmsg-wv{flex:1;height:24px;position:relative}
-.vmsg-wv canvas{width:100%;height:100%}
-.vmsg-dur{font-size:.72rem;color:rgba(255,255,255,.55);flex-shrink:0;min-width:28px;text-align:right}
+/* Voice message bubble - Telegram style */
+.vmsg{display:flex;align-items:center;gap:10px;padding:10px 14px 4px;min-width:220px;max-width:300px}
+.vmsg-play{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.vmsg-play svg{width:16px;height:16px;color:#fff}
+.vmsg-body{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.vmsg-wave{width:100%;height:32px;display:block}
+.vmsg-bot{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.vmsg-dur{font-size:.75rem;color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums}
 
 /* MOBILE */
 @media(max-width:700px){
@@ -1152,16 +1156,19 @@ function playBeep(freq=880, dur=80, vol=0.3){
 
 function startVoice(){
   if(!S.cur) return;
+  const isWebView=/wv\b|WebView|Android.*Version\/[\d.]+.*Chrome\/[\d.]+.*(?:Mobile)?/.test(navigator.userAgent)&&!/Chrome\//.test(navigator.userAgent.replace(/.*Chrome\//,'x'));
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    showMicToast('Откройте в Chrome/Safari для записи голоса');
+    showMicToast(isWebView
+      ?'APK: Настройки телефона → Приложения → [приложение] → Разрешения → Микрофон ✓'
+      :'Откройте в Chrome или Safari для записи голоса');
     return;
   }
-  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:16000}})
   .then(stream=>{
     playBeep(880,80,0.25);
     _vmStream=stream;_vmChunks=[];
     const mimeTypes=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''];
-    const mimeType=mimeTypes.find(m=>m===''||MediaRecorder.isTypeSupported(m));
+    const mimeType=mimeTypes.find(mt=>mt===''||MediaRecorder.isTypeSupported(mt));
     try{ _vmRec=new MediaRecorder(stream,mimeType?{mimeType}:{}); }
     catch(e){ _vmRec=new MediaRecorder(stream); }
     _vmRec.ondataavailable=e=>{if(e.data&&e.data.size>0)_vmChunks.push(e.data);};
@@ -1171,12 +1178,15 @@ function startVoice(){
     showVoiceUI();
   })
   .catch(err=>{
+    console.warn('Mic err:',err.name);
     if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError'){
-      showMicToast('Разрешите микрофон: Настройки → Браузер → Микрофон → Вкл');
+      showMicToast(isWebView
+        ?'APK: Настройки → Приложения → [приложение] → Разрешения → Микрофон → Вкл'
+        :'Нажмите 🔒 в адресной строке → Микрофон → Разрешить');
     } else if(err.name==='NotFoundError'){
       showMicToast('Микрофон не найден на устройстве');
     } else {
-      showMicToast('Ошибка записи. Попробуйте перезагрузить страницу.');
+      showMicToast('Ошибка микрофона — перезагрузите страницу');
     }
   });
 }
@@ -1662,45 +1672,98 @@ const Z={
         rpEl.innerHTML=`<div class="rn">${sn}</div><div class="rt">🎤 Голосовое</div>`;
         mb.appendChild(rpEl);
       }
+      // Telegram-style voice
       const vmDiv=document.createElement('div'); vmDiv.className='vmsg';
-      let _aud=null,_playing=false;
-      const playBtn=document.createElement('div'); playBtn.className='vmsg-play';
-      playBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      let _aud=null,_playing=false,_prog=0;
+
+      // Play button
+      const playBtn=document.createElement('button'); playBtn.className='vmsg-play';
+      playBtn.setAttribute('type','button');
+      const PLAY_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
+      const PAUSE_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
+      playBtn.innerHTML=PLAY_SVG;
+
+      // Body with waveform
+      const body=document.createElement('div'); body.className='vmsg-body';
+
+      // SVG waveform (static bars like Telegram) - no canvas for performance
+      const N=36;
+      const heights=Array.from({length:N},()=>Math.max(3,Math.round(4+Math.random()*24)));
+      const svgNS='http://www.w3.org/2000/svg';
+      const svgEl=document.createElementNS(svgNS,'svg');
+      svgEl.setAttribute('viewBox',`0 0 ${N*5} 32`);
+      svgEl.setAttribute('preserveAspectRatio','none');
+      svgEl.className='vmsg-wave';
+      const barsEls=[];
+      heights.forEach((h,i)=>{
+        const rect=document.createElementNS(svgNS,'rect');
+        rect.setAttribute('x',i*5+1);
+        rect.setAttribute('y',(32-h)/2);
+        rect.setAttribute('width',3);
+        rect.setAttribute('height',h);
+        rect.setAttribute('rx',1.5);
+        rect.style.fill='rgba(255,255,255,0.35)';
+        svgEl.appendChild(rect);
+        barsEls.push(rect);
+      });
+
+      // Bottom row: time
+      const bot=document.createElement('div'); bot.className='vmsg-bot';
+      const durEl=document.createElement('span'); durEl.className='vmsg-dur'; durEl.textContent=m.voice.dur||'0:00';
+      const meta=document.createElement('div'); meta.className='mmeta'; meta.style.cssText='padding:0;justify-content:flex-end;display:flex;align-items:center;gap:2px';
+      meta.innerHTML=`<span class="mt">${ft(m.ts)}</span>${m.out?Z.btk(m.status).outerHTML:''}`;
+      bot.append(durEl,meta);
+
+      body.append(svgEl,bot);
+      vmDiv.append(playBtn,body);
+
+      // Progress tracking
+      let _rafId=null;
+      function updateProgress(pct){
+        _prog=pct;
+        barsEls.forEach((r,i)=>{
+          const filled=i/N<=pct;
+          r.style.fill=filled?'rgba(255,255,255,0.90)':'rgba(255,255,255,0.28)';
+        });
+        const s=Math.round((m.voice.dur?parseInt(m.voice.dur.split(':')[0])*60+parseInt(m.voice.dur.split(':')[1]):0)*(1-pct));
+        const mm=Math.floor(s/60),ss=s%60;
+        if(!_playing) durEl.textContent=(mm+':'+(ss<10?'0':'')+ss);
+      }
+      function tick(){
+        if(!_aud||!_playing) return;
+        const pct=_aud.duration?_aud.currentTime/_aud.duration:0;
+        updateProgress(pct);
+        _rafId=requestAnimationFrame(tick);
+      }
+
       playBtn.onclick=e=>{
         e.stopPropagation();
-        if(!_aud){_aud=new Audio(m.voice.url);}
+        if(!_aud){
+          _aud=new Audio(m.voice.url);
+          _aud.onended=()=>{
+            _playing=false;
+            playBtn.innerHTML=PLAY_SVG;
+            cancelAnimationFrame(_rafId);
+            updateProgress(0);
+            durEl.textContent=m.voice.dur||'0:00';
+          };
+        }
         if(_playing){
-          _aud.pause();_aud.currentTime=0;_playing=false;
-          playBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+          _aud.pause();_playing=false;
+          playBtn.innerHTML=PLAY_SVG;
+          cancelAnimationFrame(_rafId);
         } else {
-          _aud.play();_playing=true;
-          playBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-          _aud.onended=()=>{_playing=false;playBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>';};
+          _aud.play().catch(()=>{});
+          _playing=true;
+          playBtn.innerHTML=PAUSE_SVG;
+          tick();
         }
       };
-      const wvDiv=document.createElement('div'); wvDiv.className='vmsg-wv';
-      const cv2=document.createElement('canvas'); cv2.height=24; wvDiv.appendChild(cv2);
-      setTimeout(()=>{
-        cv2.width=cv2.offsetWidth||120;
-        const c2=cv2.getContext('2d');const W=cv2.width,H=24;
-        const bars2=Array.from({length:26},()=>0.12+Math.random()*0.88);
-        bars2.forEach((v,i)=>{
-          const bw=W/26,h=Math.max(3,v*(H-2)),x=i*bw+0.5,y=(H-h)/2;
-          c2.fillStyle=`rgba(180,210,255,${0.28+v*0.5})`;
-          const r=Math.min(bw/2-.5,h/2);
-          c2.beginPath();
-          if(c2.roundRect)c2.roundRect(x,y,Math.max(1,bw-1.5),h,r);
-          else c2.rect(x,y,Math.max(1,bw-1.5),h);
-          c2.fill();
-        });
-      },60);
-      const durDiv=document.createElement('div'); durDiv.className='vmsg-dur'; durDiv.textContent=m.voice.dur;
-      vmDiv.append(playBtn,wvDiv,durDiv);
-      const mm2=document.createElement('div'); mm2.className='mmeta';
-      mm2.innerHTML=`<span class="mt">${ft(m.ts)}</span>${m.out?Z.btk(m.status).outerHTML:''}`;
-      mb.appendChild(vmDiv); mb.appendChild(mm2); row.appendChild(mb);
-    } else if(m.photos&&m.photos.filter(p=>p&&!p.startsWith('blob:')).length>0){
-      const validPhotos=m.photos.filter(p=>p&&!p.startsWith('blob:'));
+
+      mb.appendChild(vmDiv);
+      row.appendChild(mb);
+    } else if(m.photos&&m.photos.filter(p=>p).length>0){
+      const validPhotos=m.photos.filter(p=>p);
       const n=Math.min(validPhotos.length,5);
       const grid=document.createElement('div'); grid.className=`pg n${n}`;
       validPhotos.slice(0,5).forEach((src,pi)=>{
