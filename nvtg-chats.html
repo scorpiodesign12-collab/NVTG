@@ -1509,31 +1509,36 @@ const Z={
     if(!c&&id!=='fav'&&ME.id){
       const {data:prof}=await sb.from('profiles').select('*').eq('id',id).single();
       if(prof){
-        const GRADS=[['#1e50ff','#6b8fff'],['#ff6b35','#ffaa40'],['#00c26f','#00e887'],['#9b59b6','#e056fd']];
+        const GRADS=[['#444','#666'],['#555','#777'],['#333','#555'],['#444','#666']];
         const gi=(prof.id||'a').charCodeAt(0)%GRADS.length;
         c={id:prof.id,name:prof.full_name||prof.username||'Пользователь',sub:prof.username?('@'+prof.username):'',photo:prof.avatar_url||null,ini:(prof.full_name||prof.username||'?')[0].toUpperCase(),g:GRADS[gi],online:false,fav:false,username:prof.username||''};
-        // Добавляем в CHATS чтобы не потерять
         if(!CHATS.find(x=>x.id===id)) CHATS.push({...c,lastText:'',lastTs:0});
       }
     }
-    if(!c) c={id,name:'Пользователь',g:['#1e50ff','#6b8fff'],photo:null,ini:'?',online:false,fav:false};
-    // Check if private account blocks us
-    if(id!=='fav'){
-      const {data:privProf}=await sb.from('profiles').select('is_private').eq('id',id).maybeSingle();
-      if(privProf?.is_private){
-        const {data:friendCheck}=await sb.from('friendships')
-          .select('id').or(`and(requester_id.eq.${ME.id},addressee_id.eq.${id}),and(requester_id.eq.${id},addressee_id.eq.${ME.id})`)
-          .eq('status','accepted').maybeSingle();
-        if(!friendCheck){
-          // Block sending
-          Q('ia').style.display='none';
-          // Show notice in msgs area after loading
-        }
-      }
-    }
-    Q('nc').style.display='none'; Q('ch').style.display='flex'; Q('msgs').style.display='flex'; Q('msgs').style.flexDirection='column';
-    Q('ia').style.display='flex'; Q('ia').style.flexDirection='column'; Q('pc').classList.add('open');
+    if(!c) c={id,name:'Пользователь',g:['#444','#666'],photo:null,ini:'?',online:false,fav:false};
+
+    // Show chat panel FIRST (always)
+    Q('nc').style.display='none';
+    Q('ch').style.display='flex';
+    Q('msgs').style.display='flex';
+    Q('msgs').style.flexDirection='column';
+    Q('ia').style.display='flex';
+    Q('ia').style.flexDirection='column';
+    Q('pc').classList.add('open');
     if(window.visualViewport&&window.innerWidth<=700){const vv=window.visualViewport;Q('pc').style.height=vv.height+'px';Q('pc').style.top=vv.offsetTop+'px';}
+
+    // Check private AFTER showing (only for real users, not fav)
+    if(id!=='fav'&&ME.id){
+      try{
+        const {data:privProf}=await sb.from('profiles').select('is_private').eq('id',id).maybeSingle();
+        if(privProf?.is_private){
+          const {data:friendCheck}=await sb.from('friendships')
+            .select('id').or(`and(requester_id.eq.${ME.id},addressee_id.eq.${id}),and(requester_id.eq.${id},addressee_id.eq.${ME.id})`)
+            .eq('status','accepted').maybeSingle();
+          if(!friendCheck) Q('ia').style.display='none';
+        }
+      }catch(e){}
+    }
     const chav=Q('chav'); chav.style.background=`linear-gradient(135deg,${c.g[0]},${c.g[1]})`; chav.innerHTML='';
     if(c.photo){const im=document.createElement('img');im.src=c.photo;im.alt=c.name;chav.appendChild(im);}
     else if(c.fav){chav.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
@@ -2372,11 +2377,31 @@ function hideReactPicker(){ document.getElementById('rpick').classList.remove('o
 function pickReact(emoji){ hideReactPicker(); if(_reactMsgId) toggleReact(_reactMsgId, emoji); }
 document.addEventListener('click', e=>{ if(!document.getElementById('rpick').contains(e.target)) hideReactPicker(); });
 
+// Fart sound on reaction 💨
+function playFart(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.4,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){
+      const t=i/ctx.sampleRate;
+      const freq=80+Math.random()*40-t*60;
+      d[i]=(Math.sin(2*Math.PI*freq*t)+Math.random()*0.6-0.3)*Math.exp(-t*8)*(0.6+Math.random()*0.4);
+    }
+    const src=ctx.createBufferSource();
+    src.buffer=buf;
+    const gain=ctx.createGain();
+    gain.gain.value=0.35;
+    src.connect(gain);gain.connect(ctx.destination);
+    src.start();
+    setTimeout(()=>ctx.close(),600);
+  }catch(e){}
+}
+
 // Build reactions bar for a message
 function buildReactBar(msgId){
   const reacts = reactionsMap[msgId];
   if(!reacts || !reacts.length) return null;
-  // Group by emoji
   const groups = {};
   reacts.forEach(r=>{ if(!groups[r.emoji]) groups[r.emoji]={cnt:0,users:[]}; groups[r.emoji].cnt++; groups[r.emoji].users.push(r.user_id); });
   const bar = document.createElement('div');
@@ -2385,18 +2410,19 @@ function buildReactBar(msgId){
     const mine = g.users.includes(ME.id);
     const b = document.createElement('span');
     b.className = 'rbub' + (mine?' mine':'');
-    // If mine, show my avatar inside the bubble
+    // Avatar for mine reaction
     let avHtml = '';
     if(mine){
       if(ME.avatar){
-        avHtml = `<img src="${ME.avatar}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;flex-shrink:0;margin-left:2px">`;
+        avHtml = `<img src="${ME.avatar}" style="width:15px;height:15px;border-radius:50%;object-fit:cover;flex-shrink:0;margin-left:3px;border:1px solid rgba(255,255,255,.3)">`;
       } else {
-        const ini = (ME.name||'?')[0].toUpperCase();
-        avHtml = `<span style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-left:2px">${ini}</span>`;
+        const ini=(ME.name||'?')[0].toUpperCase();
+        avHtml = `<span style="width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;margin-left:3px">${ini}</span>`;
       }
     }
-    b.innerHTML = `${emoji}${avHtml}<span class="rcnt">${g.cnt>1?g.cnt:''}</span>`;
-    b.onclick = e => { e.stopPropagation(); toggleReact(msgId, emoji); };
+    // Always show count (even 1)
+    b.innerHTML = `${emoji}${avHtml}<span class="rcnt">${g.cnt}</span>`;
+    b.onclick = e => { e.stopPropagation(); playFart(); toggleReact(msgId, emoji); };
     bar.appendChild(b);
   });
   return bar;
@@ -2411,7 +2437,7 @@ function showCLMenu(x,y,chatId){
   m.style.top=Math.min(y,window.innerHeight-80)+'px';
 }
 function hideCLMenu(){document.getElementById('clmenu').classList.remove('on');_clChatId=null;}
-function ctxReact(emoji){Z.hctx();if(S.cmid)toggleReact(S.cmid,emoji);}
+function ctxReact(emoji){Z.hctx();if(S.cmid){playFart();toggleReact(S.cmid,emoji);}}
 function clMenuDel(){hideCLMenu();if(_clChatId){S.dchid=_clChatId;document.getElementById('ddch').classList.add('on');}}
 document.addEventListener('click',e=>{if(!document.getElementById('clmenu').contains(e.target))hideCLMenu();});
 
