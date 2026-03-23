@@ -674,6 +674,7 @@ async function setOffline(){
   await sb.from('presence').upsert({user_id:ME.id,is_online:false,last_seen:new Date().toISOString()},{onConflict:'user_id'});
 }
 function startPresence(){
+  if(!ME.id||ME.id.startsWith('demo-')) return;
   setOnline();
   setInterval(setOnline,30000);
   window.addEventListener('beforeunload',()=>setOffline());
@@ -739,17 +740,22 @@ async function uploadPhoto(file){
 
 async function loadProfile(){
   try{
+    // Try real Supabase auth first
     const {data:{user}}=await sb.auth.getUser();
-    if(!user){location.href='nvtg-index.html';return;}
-    ME.id=user.id;
-
-    // При каждом входе проверяем uid — если сменился, чистим недавних
-    const savedUid=LS.get('nvtg_uid');
-    if(savedUid !== ME.id){
-      LS.rm('nvtg_recent');
-      LS.set('nvtg_uid', ME.id);
+    if(!user){
+      // No session — run in demo mode with saved local data
+      ME.id=LS.get('nvtg_uid','demo-'+Math.random().toString(36).slice(2,8));
+      ME.name=LS.get('nvtg_name','Пользователь');
+      ME.username=LS.get('nvtg_user','');
+      ME.avatar=LS.get('nvtg_av',null)||null;
+      LS.set('nvtg_uid',ME.id);
+      _fillDrawer();
+      loadChatsDemo();
+      return;
     }
-
+    ME.id=user.id;
+    const savedUid=LS.get('nvtg_uid');
+    if(savedUid !== ME.id){ LS.rm('nvtg_recent'); LS.set('nvtg_uid', ME.id); }
     const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).single();
     if(p){
       ME.name=p.full_name||'Пользователь';
@@ -759,34 +765,46 @@ async function loadProfile(){
       LS.set('nvtg_user',ME.username);
       if(ME.avatar) LS.set('nvtg_av',ME.avatar);
     }
-    // Fill drawer header
-    const drwAv=Q('drw-av');const drwNm=Q('drw-nm');const drwUs=Q('drw-us');
-    if(drwNm) drwNm.textContent=ME.name;
-    if(drwUs) drwUs.textContent=ME.username?('@'+ME.username):'';
-    if(drwAv){
-      if(ME.avatar){const im=document.createElement('img');im.src=ME.avatar;im.style.cssText='width:100%;height:100%;object-fit:cover;display:block;border-radius:50%';drwAv.innerHTML='';drwAv.appendChild(im);}
-      else drwAv.textContent=ME.name[0].toUpperCase();
-    }
+    _fillDrawer();
     startPresence();
-    // Remove creator letter if already read
-    if(LS.get('nvtg_creator_read')==='1'){
-      CHATS=CHATS.filter(c=>c.id!=='creator');
-    }
+    if(LS.get('nvtg_creator_read')==='1'){ CHATS=CHATS.filter(c=>c.id!=='creator'); }
     loadChats();
     checkNotifBadge();
     subscribeNewMessages();
-  }catch(e){console.warn('Profile load error',e);}
+  }catch(e){
+    // Network/auth error — demo mode
+    console.warn('Auth unavailable, running demo mode');
+    ME.id=LS.get('nvtg_uid','demo-'+Math.random().toString(36).slice(2,8));
+    ME.name=LS.get('nvtg_name','Пользователь');
+    ME.username=LS.get('nvtg_user','');
+    ME.avatar=LS.get('nvtg_av',null)||null;
+    LS.set('nvtg_uid',ME.id);
+    _fillDrawer();
+    loadChatsDemo();
+  }
+}
+
+function _fillDrawer(){
+  const drwAv=Q('drw-av'),drwNm=Q('drw-nm'),drwUs=Q('drw-us');
+  if(drwNm) drwNm.textContent=ME.name;
+  if(drwUs) drwUs.textContent=ME.username?('@'+ME.username):'';
+  if(drwAv){
+    if(ME.avatar){const im=document.createElement('img');im.src=ME.avatar;im.style.cssText='width:100%;height:100%;object-fit:cover;display:block;border-radius:50%';drwAv.innerHTML='';drwAv.appendChild(im);}
+    else drwAv.textContent=(ME.name||'П')[0].toUpperCase();
+  }
+}
+
+function loadChatsDemo(){
+  // Only Избранное in demo, load local messages
+  CHATS=[{id:'fav',name:'Избранное',sub:'Сохранённые заметки',photo:null,ini:'★',g:['#1e50ff','#3d6bff'],online:false,fav:true}];
+  Z.rl();
 }
 
 async function doLogout(){
-  await sb.auth.signOut();
-  // Очищаем всё при выходе
-  LS.rm('nvtg_uid');
-  LS.rm('nvtg_recent');
-  LS.rm('nvtg_name');
-  LS.rm('nvtg_user');
-  LS.rm('nvtg_av');
-  location.href='nvtg-index.html';
+  try{ await sb.auth.signOut(); }catch(e){}
+  LS.rm('nvtg_uid');LS.rm('nvtg_recent');LS.rm('nvtg_name');LS.rm('nvtg_user');LS.rm('nvtg_av');
+  // In demo/local mode just reload
+  location.reload();
 }
 
 // ── CHATS (dynamic, loaded from Supabase) ──
@@ -799,21 +817,19 @@ let CHATS=[
 async function loadChats(){
   if(!ME.id) return;
   CHATS=CHATS.filter(c=>c.fav);
-  console.log('loadChats: ME.id=', ME.id);
 
+  try{
   // Загружаем скрытые чаты
   let hiddenChatIds=new Set();
   try{
     const {data:hidden}=await sb.from('hidden_chats').select('chat_id').eq('user_id',ME.id);
     (hidden||[]).forEach(h=>hiddenChatIds.add(h.chat_id));
-  }catch(e){} // таблица может не существовать
+  }catch(e){}
 
   const {data:msgs,error}=await sb.from('messages')
     .select('chat_id,sender_id,created_at,text,photos')
     .order('created_at',{ascending:false});
-  console.log('loadChats messages:', {msgs,error});
-  if(error){console.error('loadChats error:',error);Z.rl();return;}
-  if(!msgs||!msgs.length){Z.rl();return;}
+  if(error||!msgs||!msgs.length){Z.rl();return;}
 
   // Собираем уникальных партнёров только из реальных сообщений
   const seen=new Set();
@@ -856,6 +872,7 @@ async function loadChats(){
   // Сортируем по последнему сообщению
   CHATS.sort((a,b)=>a.fav?-1:b.fav?1:(b.lastTs||0)-(a.lastTs||0));
   Z.rl();
+  }catch(e){console.warn('loadChats error (demo mode):',e);Z.rl();}
 }
 
 function makeChatId(a,b){return [a,b].sort().join('_');}
@@ -915,16 +932,16 @@ function subscribeTyping(partnerId){
 let msgSub=null;
 let unreadCounts={};
 function subscribeNewMessages(){
-  if(!ME.id) return;
-  msgSub=sb.channel('all-messages')
+  if(!ME.id||ME.id.startsWith('demo-')) return;
+  try{
+    msgSub=sb.channel('all-messages')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async payload=>{
       const m=payload.new;
       const parts=m.chat_id.split('_');
       if(!parts.includes(ME.id)) return;
-      if(m.sender_id===ME.id) return; // Мои исходящие — не уведомляем
+      if(m.sender_id===ME.id) return;
       const partnerId=parts.find(p=>p!==ME.id);
-      if(!partnerId||partnerId===ME.id) return; // Это сообщение самому себе (не должно быть)
-
+      if(!partnerId||partnerId===ME.id) return;
       if(!CHATS.find(c=>c.id===partnerId)){
         const {data:prof}=await sb.from('profiles').select('*').eq('id',partnerId).single();
         if(prof){
@@ -941,6 +958,7 @@ function subscribeNewMessages(){
       Z.rl();
     })
     .subscribe();
+  }catch(e){console.warn('subscribeNewMessages skipped (demo mode)');}
 }
 
 // ── STATE ──
@@ -981,7 +999,7 @@ async function loadMessages(partnerId){
     Z.rm();
     setTimeout(()=>{const msgs=Q('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;},50);
   }catch(e){
-    console.error('loadMessages exception:',e);
+    // Demo mode — show empty chat
     currentMsgs=[];Z.rm();
   }
 }
@@ -1051,10 +1069,14 @@ async function sendMessage(text,photos,replyTo,replyName){
     const {data,error}=await sb.from('messages').insert(insertData).select().single();
 
     if(error){
-      console.warn('Send error',error);
-      const idx=currentMsgs.findIndex(m=>m.id===tmpId);
-      if(idx>=0) currentMsgs.splice(idx,1);
-      Z.rm();
+      console.warn('Send error (demo mode — keeping locally)',error);
+      // In demo/offline mode: keep the message locally with 'read' status
+      const idx2=currentMsgs.findIndex(m=>m.id===tmpId);
+      if(idx2>=0){currentMsgs[idx2].status='read';}
+      Z.rm();if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
+      const chat2=CHATS.find(c=>c.id===S.cur);
+      if(chat2){chat2.lastText=photos?.length?'📷 Фото':text;chat2.lastTs=Date.now();}
+      Z.rl();
       return;
     }
 
@@ -1069,10 +1091,13 @@ async function sendMessage(text,photos,replyTo,replyName){
     if(chat){chat.lastText=photos?.length?'📷 Фото':safeText;chat.lastTs=Date.now();}
     Z.rl();
   }catch(e){
-    console.warn('sendMessage exception',e);
+    console.warn('sendMessage exception (demo mode — keeping locally)',e);
     const idx=currentMsgs.findIndex(m=>m.id===tmpId);
-    if(idx>=0) currentMsgs.splice(idx,1);
-    Z.rm();
+    if(idx>=0){currentMsgs[idx].status='read';}
+    Z.rm();if(msgsEl)msgsEl.scrollTop=msgsEl.scrollHeight;
+    const chat=CHATS.find(c=>c.id===S.cur);
+    if(chat){chat.lastText=photos?.length?'📷 Фото':text;chat.lastTs=Date.now();}
+    Z.rl();
   }
 }
 
