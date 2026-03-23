@@ -1151,41 +1151,46 @@ function playBeep(freq=880, dur=80, vol=0.3){
 }
 
 function startVoice(){
-  if(!S.cur)return;
+  if(!S.cur) return;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    // Show user-friendly message instead of alert
-    const ia=Q('ia');
-    if(ia){
-      const msg=document.createElement('div');
-      msg.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,16,16,.97);z-index:60;font-size:.9rem;color:rgba(255,100,120,.9);gap:8px;padding:12px';
-      msg.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Откройте в браузере для записи голоса';
-      ia.appendChild(msg);setTimeout(()=>msg.remove(),3000);
-    }
+    showMicToast('Откройте в Chrome/Safari для записи голоса');
     return;
   }
-  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-    playBeep(880, 80, 0.25); // beep when recording starts
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})
+  .then(stream=>{
+    playBeep(880,80,0.25);
     _vmStream=stream;_vmChunks=[];
-    // Try best codec available
     const mimeTypes=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''];
     const mimeType=mimeTypes.find(m=>m===''||MediaRecorder.isTypeSupported(m));
-    const opts=mimeType?{mimeType}:{};
-    _vmRec=new MediaRecorder(stream,opts);
+    try{ _vmRec=new MediaRecorder(stream,mimeType?{mimeType}:{}); }
+    catch(e){ _vmRec=new MediaRecorder(stream); }
     _vmRec.ondataavailable=e=>{if(e.data&&e.data.size>0)_vmChunks.push(e.data);};
     _vmRec.onstop=()=>finalizeVoice();
     _vmRec.start(100);
     _vmStart=Date.now();
     showVoiceUI();
-  }).catch(e=>{
-    // Show inline error, not alert
-    const ia=Q('ia');
-    if(ia){
-      const msg=document.createElement('div');
-      msg.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,16,16,.97);z-index:60;font-size:.88rem;color:rgba(255,100,120,.9);gap:8px;padding:12px;text-align:center';
-      msg.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Нет доступа к микрофону.<br>Разрешите в настройках браузера.';
-      ia.appendChild(msg);setTimeout(()=>msg.remove(),3500);
+  })
+  .catch(err=>{
+    if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError'){
+      showMicToast('Разрешите микрофон: Настройки → Браузер → Микрофон → Вкл');
+    } else if(err.name==='NotFoundError'){
+      showMicToast('Микрофон не найден на устройстве');
+    } else {
+      showMicToast('Ошибка записи. Попробуйте перезагрузить страницу.');
     }
   });
+}
+
+function showMicToast(text){
+  let t=Q('mic-toast');
+  if(!t){
+    t=document.createElement('div');t.id='mic-toast';
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(20,20,20,.96);border:1px solid rgba(255,100,120,.3);border-radius:14px;padding:10px 18px;font-size:.88rem;color:rgba(255,160,170,.95);z-index:999;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);pointer-events:none;white-space:normal;line-height:1.4';
+    document.body.appendChild(t);
+  }
+  t.textContent=text;t.style.display='block';t.style.opacity='1';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>{t.style.opacity='0';setTimeout(()=>{t.style.display='none';},400);},4000);
 }
 
 function showVoiceUI(){
@@ -1791,7 +1796,6 @@ const Z={
   // SEND
   async sm(){
     const ta=Q('ta'), rawText=(ta?ta.value:''), hp=S.photos.length>0;
-    // Правильная обработка текста с эмодзи (Array.from обрабатывает суррогатные пары)
     const text=Array.from(rawText).join('').trim();
     const capInp=Q('cap-inp'), capText=capInp?Array.from(capInp.value||'').join('').trim():'';
     if((!text&&!hp)||!S.cur) return;
@@ -1808,15 +1812,16 @@ const Z={
     const replyTo=S.mode==='reply'&&S.mdata?S.mdata.mid:null;
     const replyName=S.mode==='reply'&&S.mdata?S.mdata.name:null;
     const msgText=hp?capText:text;
-    const photos=hp?S.photos.map(p=>p.url):[];
+    // Use whatever URLs we have (blob or base64)
+    const photos=hp?S.photos.map(p=>p.url).filter(Boolean):[];
 
-    // Очищаем всё ДО отправки (чтобы пользователь мог сразу писать)
-    S.mode=null; S.mdata=null;
-    if(Q('strip')) Q('strip').classList.remove('on');
-    S.photos=[]; Z.uph();
-    if(Q('cap-inp')) Q('cap-inp').value='';
-    if(Q('cap-row')) Q('cap-row').style.display='none';
-    if(ta){ta.value='';ta.style.height='auto';} Z.ck();
+    // Clear before send
+    S.mode=null;S.mdata=null;
+    if(Q('strip'))Q('strip').classList.remove('on');
+    S.photos=[];Z.uph();
+    if(Q('cap-inp'))Q('cap-inp').value='';
+    if(Q('cap-row'))Q('cap-row').style.display='none';
+    if(ta){ta.value='';ta.style.height='auto';}Z.ck();
 
     if(S.cur==='fav'){
       const msg={id:'fav-'+Date.now(),text:msgText,out:true,ts:Date.now(),status:'read',read:true,photos,replyTo,replyName};
@@ -1856,23 +1861,37 @@ const Z={
   cs(){S.mode=null;S.mdata=null;Q('strip').classList.remove('on');const ta=Q('ta');if(ta){ta.value='';Z.ar(ta);}Z.ck();},
 
   // PHOTO
-  tap(){if(S.photos.length>=5){alert('Максимум 5 фото');return;}Q('fi').click();},
+  tap(){if(!S.cur){return;}if(S.photos.length>=5){return;}Q('fi').click();},
   af(e){
     const files=[...e.target.files].slice(0,Math.max(0,5-S.photos.length));
     e.target.value='';
     if(!files.length) return;
     files.forEach(f=>{
-      if(f.size>10*1024*1024){alert('Файл '+f.name+' > 10 МБ');return;}
+      if(f.size>15*1024*1024) return;
       const blobUrl=URL.createObjectURL(f);
-      S.photos.push({url:blobUrl,uploading:true});
+      // Add immediately with blob for preview
+      S.photos.push({url:blobUrl,file:f,uploading:true});
       Z.uph();Z.ck();
-      uploadPhoto(f).then(url=>{
-        const idx=S.photos.findIndex(p=>p.url===blobUrl);
-        if(idx<0) return;
-        if(url){S.photos[idx]={url,uploading:false};}
-        else{S.photos.splice(idx,1);}
+      // Compress to base64 for sending
+      const img=new Image();
+      img.onload=()=>{
+        URL.revokeObjectURL(blobUrl);
+        const MAX=1200;
+        let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){const r=Math.min(MAX/w,MAX/h);w=Math.round(w*r);h=Math.round(h*r);}
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        const b64=cv.toDataURL('image/jpeg',0.82);
+        const idx=S.photos.findIndex(p=>p.file===f);
+        if(idx>=0){S.photos[idx]={url:b64,uploading:false};}
         Z.uph();Z.ck();
-      });
+      };
+      img.onerror=()=>{
+        const idx=S.photos.findIndex(p=>p.file===f);
+        if(idx>=0) S.photos[idx].uploading=false;
+        Z.uph();Z.ck();
+      };
+      img.src=blobUrl;
     });
   },
   uph(){
@@ -1925,7 +1944,7 @@ const Z={
   // CONTEXT
   shctx(x,y,m){
     S.cmid=m.id;Z.hhm();hideReactPicker();
-    Q('cxedt').style.display=m.out&&!m.photos?'flex':'none';
+    const cxedt=Q('cxedt');if(cxedt)cxedt.style.display=m.out&&!m.photos?'flex':'none';
     Q('cplbl').textContent=/https?:\/\//.test(m.text)?'Копировать ссылку':'Копировать текст';
     const ctx=Q('ctx');ctx.classList.add('on');
     const cw=ctx.offsetWidth||190;
