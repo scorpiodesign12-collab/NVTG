@@ -266,15 +266,15 @@ a.ml{color:rgba(200,220,255,.9);text-decoration:underline;word-break:break-all}
 .ej:hover{background:rgba(255,255,255,.08)}
 
 /* CONTEXT MENU */
-#ctx{position:fixed;z-index:300;background:rgba(20,20,20,.96);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:16px;box-shadow:0 12px 50px rgba(0,0,0,.6);overflow:hidden;min-width:190px;display:none;border:1px solid rgba(255,255,255,.10)}
-@keyframes ci{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
-#ctx.on{display:block;animation:ci .14s ease}
-.cxi{display:flex;align-items:center;gap:11px;padding:11px 15px;cursor:pointer;transition:background .12s}
-.cxi:hover{background:rgba(255,255,255,.07)}
-.cxi svg{color:rgba(255,255,255,.4);flex-shrink:0;width:17px;height:17px}
-.cxi span{font-size:1.04rem;font-weight:500;color:rgba(255,255,255,.8)}
+#ctx{position:fixed;z-index:300;background:rgba(22,22,22,.97);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border-radius:18px;box-shadow:0 16px 60px rgba(0,0,0,.7);overflow:hidden;min-width:210px;display:none;border:1px solid rgba(255,255,255,.12)}
+@keyframes ci{from{opacity:0;transform:scale(.93) translateY(4px)}to{opacity:1;transform:none}}
+#ctx.on{display:block;animation:ci .16s cubic-bezier(.2,0,.2,1)}
+.cxi{display:flex;align-items:center;gap:13px;padding:13px 17px;cursor:pointer;transition:background .12s;-webkit-tap-highlight-color:transparent}
+.cxi:hover,.cxi:active{background:rgba(255,255,255,.08)}
+.cxi svg{color:rgba(255,255,255,.45);flex-shrink:0;width:18px;height:18px}
+.cxi span{font-size:1rem;font-weight:500;color:rgba(255,255,255,.88)}
 .cxi.red svg,.cxi.red span{color:#ff6b7a!important}
-.cxs{height:1px;background:rgba(255,255,255,.07)}
+.cxs{height:1px;background:rgba(255,255,255,.08);margin:2px 0}
 
 /* HDR MENU */
 #hm{position:fixed;z-index:300;background:rgba(20,20,20,.96);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:16px;box-shadow:0 12px 50px rgba(0,0,0,.6);overflow:hidden;min-width:210px;display:none;border:1px solid rgba(255,255,255,.10)}
@@ -1199,30 +1199,23 @@ function showVoiceUI(){
   if(!vbar){
     vbar=document.createElement('div');
     vbar.id='voicebar';
-    vbar.style.cssText='position:absolute;inset:0;display:flex;align-items:center;padding:0 12px;gap:10px;background:rgba(16,16,16,.97);backdrop-filter:blur(24px);z-index:50;animation:fadeUp .18s ease';
+    vbar.style.cssText='position:absolute;inset:0;display:flex;align-items:center;padding:0 10px;gap:10px;background:rgba(14,14,14,.99);backdrop-filter:blur(24px);z-index:50;animation:fadeUp .18s ease';
     vbar.innerHTML=`
-      <button onclick="cancelVoice()" style="flex-shrink:0;width:42px;height:42px;border-radius:50%;background:rgba(255,80,100,.18);border:1.5px solid rgba(255,100,120,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(255,80,100,.32)'" onmouseout="this.style.background='rgba(255,80,100,.18)'">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b7a" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <button onclick="cancelVoice()" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;background:rgba(255,70,90,.15);border:1.5px solid rgba(255,80,100,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ff6b7a;transition:all .15s;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(255,70,90,.3)'" ontouchend="this.style.background='rgba(255,70,90,.15)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:0;overflow:hidden">
-        <div style="display:flex;align-items:center;gap:7px">
-          <span id="vrecdot" style="width:7px;height:7px;border-radius:50%;background:#ff4d6a;flex-shrink:0;animation:vblink 1s ease-in-out infinite"></span>
-          <span id="vrectimer" style="font-size:.82rem;font-weight:600;color:#fff;letter-spacing:.08em;font-variant-numeric:tabular-nums">0:00</span>
-          <span style="font-size:.72rem;color:rgba(255,255,255,.38);font-style:italic">Идёт запись</span>
-        </div>
-        <canvas id="vwave" height="22" style="width:100%;height:22px"></canvas>
-      </div>
-      <button onclick="sendVoice()" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.92);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#fff';this.style.transform='scale(1.06)'" onmouseout="this.style.background='rgba(255,255,255,.92)';this.style.transform=''">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1a2eee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <span id="vrecdot" style="width:9px;height:9px;border-radius:50%;background:#ff4d6a;flex-shrink:0;animation:vblink 1s ease-in-out infinite;box-shadow:0 0 6px #ff4d6a"></span>
+      <span id="vrectimer" style="font-size:1rem;font-weight:700;color:#fff;letter-spacing:.08em;font-variant-numeric:tabular-nums;flex-shrink:0;min-width:38px">0:00</span>
+      <canvas id="vwave" height="36" style="flex:1;height:36px;min-width:0"></canvas>
+      <button onclick="sendVoice()" style="flex-shrink:0;width:48px;height:48px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;box-shadow:0 2px 12px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent" ontouchstart="this.style.transform='scale(.94)'" ontouchend="this.style.transform=''">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     `;
     ia.appendChild(vbar);
   }
   vbar.style.display='flex';
   Q('irow').style.visibility='hidden';
-  // Resize canvas after DOM
   setTimeout(()=>{const cv=Q('vwave');if(cv)cv.width=cv.offsetWidth||200;},50);
-  // Timer
   _vmTimer=setInterval(()=>{
     const el=Q('vrectimer');if(!el)return;
     const s=Math.floor((Date.now()-_vmStart)/1000);
@@ -1234,21 +1227,22 @@ function showVoiceUI(){
 function animateWave(){
   const cv=Q('vwave');if(!cv)return;
   const ctx2d=cv.getContext('2d');
-  let bars=Array.from({length:32},()=>0.1);
+  let bars=Array.from({length:40},()=>0.1);
   function draw(){
     if(!document.getElementById('voicebar')||Q('voicebar').style.display==='none'){cancelAnimationFrame(_vmAnim);return;}
-    bars.shift();bars.push(0.08+Math.random()*0.92);
+    bars.shift();bars.push(0.06+Math.random()*0.94);
     const W=cv.width,H=cv.height;
     ctx2d.clearRect(0,0,W,H);
     const bw=W/bars.length;
     bars.forEach((v,i)=>{
-      const h=Math.max(2,v*(H-2));
-      const x=i*bw+1;const y=(H-h)/2;
-      ctx2d.fillStyle=`rgba(${Math.round(100+v*80)},${Math.round(160+v*60)},255,${0.35+v*0.65})`;
-      const r=Math.min(bw/2-1,h/2);
+      const h=Math.max(3,v*(H-4));
+      const x=i*bw+0.5;const y=(H-h)/2;
+      const alpha=0.3+v*0.7;
+      ctx2d.fillStyle=`rgba(255,255,255,${alpha})`;
+      const r=Math.min(bw/2-0.5,h/2,3);
       ctx2d.beginPath();
-      if(ctx2d.roundRect)ctx2d.roundRect(x,y,Math.max(1,bw-2),h,r);
-      else ctx2d.rect(x,y,Math.max(1,bw-2),h);
+      if(ctx2d.roundRect)ctx2d.roundRect(x,y,Math.max(1.5,bw-2),h,r);
+      else ctx2d.rect(x,y,Math.max(1.5,bw-2),h);
       ctx2d.fill();
     });
     _vmAnim=requestAnimationFrame(draw);
@@ -1309,6 +1303,25 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(Math.abs(newW-_lastW)>50){_lastW=newW;buildInputBar();}
   });
   loadProfile();
+  // Auto-request mic permission on load so browser asks user once
+  // This way everyone gets the permission dialog when they open the page
+  setTimeout(()=>{
+    if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+      navigator.permissions&&navigator.permissions.query({name:'microphone'}).then(ps=>{
+        if(ps.state==='prompt'){
+          // Quietly request to trigger browser permission dialog
+          navigator.mediaDevices.getUserMedia({audio:true})
+            .then(s=>{s.getTracks().forEach(t=>t.stop());})
+            .catch(()=>{});
+        }
+      }).catch(()=>{
+        // permissions API not available - try anyway
+        navigator.mediaDevices.getUserMedia({audio:true})
+          .then(s=>{s.getTracks().forEach(t=>t.stop());})
+          .catch(()=>{});
+      });
+    }
+  }, 1500);
   // build emoji grid
   const eg=Q('emj');
   if(eg){
@@ -1687,6 +1700,7 @@ const Z={
       mm2.innerHTML=`<span class="mt">${ft(m.ts)}</span>${m.out?Z.btk(m.status).outerHTML:''}`;
       mb.appendChild(vmDiv); mb.appendChild(mm2); row.appendChild(mb);
     } else if(m.photos&&m.photos.filter(p=>p&&!p.startsWith('blob:')).length>0){
+      const validPhotos=m.photos.filter(p=>p&&!p.startsWith('blob:'));
       const n=Math.min(validPhotos.length,5);
       const grid=document.createElement('div'); grid.className=`pg n${n}`;
       validPhotos.slice(0,5).forEach((src,pi)=>{
@@ -1748,16 +1762,22 @@ const Z={
         const mb=row.querySelector('.mb');if(mb)mb.appendChild(rBar);
       }
     }
-    let lpi=null;
+    let lpi=null,_lpFired=false;
     row.addEventListener('touchstart',e=>{
+      _lpFired=false;
       const t=e.touches[0];
       lpi=setTimeout(()=>{
-        // Show context menu (reactions are at the top)
+        _lpFired=true;
+        if(navigator.vibrate) navigator.vibrate(30);
         Z.shctx(t.clientX,t.clientY,m);
-      },450);
+      },420);
     },{passive:true});
-    row.addEventListener('touchend',()=>clearTimeout(lpi),{passive:true});
-    row.addEventListener('touchmove',()=>clearTimeout(lpi),{passive:true});
+    row.addEventListener('touchend',e=>{
+      clearTimeout(lpi);
+    },{passive:true});
+    row.addEventListener('touchmove',e=>{
+      clearTimeout(lpi);
+    },{passive:true});
     Z.asw(row,m);
     return row;
   },
@@ -1952,9 +1972,12 @@ const Z={
     const cxedt=Q('cxedt');if(cxedt)cxedt.style.display=m.out&&!m.photos?'flex':'none';
     Q('cplbl').textContent=/https?:\/\//.test(m.text)?'Копировать ссылку':'Копировать текст';
     const ctx=Q('ctx');ctx.classList.add('on');
-    const cw=ctx.offsetWidth||190;
-    ctx.style.left=Math.min(x,window.innerWidth-cw-8)+'px';
-    ctx.style.top=Math.min(y,window.innerHeight-240-8)+'px';
+    // Size of menu approx 200x220
+    const menuW=200, menuH=230;
+    const left=Math.min(Math.max(x-menuW/2,8),window.innerWidth-menuW-8);
+    const top=Math.min(Math.max(y-menuH-8,60),window.innerHeight-menuH-8);
+    ctx.style.left=left+'px';
+    ctx.style.top=top+'px';
   },
   hctx(){Q('ctx').classList.remove('on');},
   ca(a){
@@ -2318,12 +2341,12 @@ async function loadReactions(chatId){
 
 async function toggleReact(msgId, emoji){
   if(!ME.id || !S.cur) return;
-
   // FAVORITES — local only
   if(S.cur==='fav'){
     if(!reactionsMap[msgId]) reactionsMap[msgId]=[];
     const ex=reactionsMap[msgId].filter(r=>r.user_id===ME.id);
     const already=ex.find(r=>r.emoji===emoji);
+    if(!already) playFart(); // only fart when adding
     if(already) reactionsMap[msgId]=reactionsMap[msgId].filter(r=>!(r.user_id===ME.id&&r.emoji===emoji));
     else{ reactionsMap[msgId]=reactionsMap[msgId].filter(r=>r.user_id!==ME.id); reactionsMap[msgId].push({message_id:msgId,user_id:ME.id,emoji}); }
     Z.rm(); return;
@@ -2335,7 +2358,9 @@ async function toggleReact(msgId, emoji){
   const alreadyThis=existing.find(r=>r.emoji===emoji);
   const maxR=meVerified?3:1;
 
-  // Optimistic update first (instant UI)
+  if(!alreadyThis) playFart(); // fart only when adding new reaction
+
+  // Optimistic update
   if(alreadyThis){
     reactionsMap[msgId]=reactionsMap[msgId].filter(r=>!(r.user_id===ME.id&&r.emoji===emoji));
   } else {
@@ -2348,19 +2373,15 @@ async function toggleReact(msgId, emoji){
     }
     reactionsMap[msgId].push({message_id:msgId,user_id:ME.id,emoji,chat_id:chatId});
   }
-  Z.rm(); // Show immediately
+  Z.rm();
 
-  // Then sync to Supabase
   try{
     if(alreadyThis){
       await sb.from('message_reactions').delete().eq('message_id',msgId).eq('user_id',ME.id).eq('emoji',emoji);
     } else {
       await sb.from('message_reactions').upsert({message_id:msgId,user_id:ME.id,emoji,chat_id:chatId},{onConflict:'message_id,user_id,emoji'});
     }
-  }catch(e){
-    console.warn('Reaction sync error:',e.message);
-    // If table doesn't exist, still works locally
-  }
+  }catch(e){ console.warn('Reaction sync:',e.message); }
 }
 
 function showReactPicker(x, y, msgId){
